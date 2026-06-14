@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>STRIDE — Dual Immune Checkpoint Blockade</title>
+<style>
+  :root{
+    --bg:#0a0a1a;
+    --blue:#00AAFF;
+    --gold:#FF8C00;
+    --cyan:#00FFEE;
+    --red:#FF3355;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;background:var(--bg);
+    font-family:-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+    color:#eaf6ff;position:fixed;inset:0;
+    touch-action:none;overscroll-behavior:none;
+  }
+  #stage{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(120% 90% at 50% 40%, #11122e 0%, #0a0a1a 55%, #050510 100%);
+  }
+  /* subtle cinematic vignette */
+  #vignette{
+    position:fixed;inset:0;pointer-events:none;z-index:30;
+    background:radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+  }
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+  /* ---------- Flash overlay (climax / brighten) ---------- */
+  #flash{
+    position:fixed;inset:0;z-index:25;pointer-events:none;opacity:0;
+    background:radial-gradient(60% 60% at 50% 50%, #ffffff 0%, #ffe9b0 35%, rgba(255,200,90,0) 75%);
+    transition:opacity .5s ease-out;mix-blend-mode:screen;
+  }
+
+  /* ---------- Title (stage 0) ---------- */
+  #title{
+    position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;pointer-events:none;
+    transition:opacity 1s ease, transform 1.2s ease;
+  }
+  #title h1{
+    font-size:120px;font-weight:800;letter-spacing:14px;
+    background:linear-gradient(180deg,#eafaff 0%, #8fd4ff 50%, #00AAFF 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 60px rgba(0,170,255,.35);
+    filter:drop-shadow(0 0 28px rgba(0,170,255,.5));
+    opacity:0;transform:translateY(24px) scale(.96);
+    animation:titleIn 1.6s cubic-bezier(.16,1,.3,1) .3s forwards;
+  }
+  #title .sub{
+    margin-top:14px;font-size:24px;font-weight:300;letter-spacing:6px;
+    text-transform:uppercase;color:#bfe6ff;opacity:0;
+    animation:fadeUp 1.4s ease 1s forwards;
+  }
+  #title .sub .gold{color:var(--gold);font-weight:500;}
+  #title .tap{
+    margin-top:64px;font-size:15px;letter-spacing:4px;text-transform:uppercase;
+    color:#8fb8d8;opacity:0;animation:fadeUp 1.2s ease 1.8s forwards;
+  }
+  #title .tap span{
+    display:inline-block;animation:pulsePrompt 1.8s ease-in-out 2.4s infinite;
+  }
+  @keyframes titleIn{
+    0%{opacity:0;transform:translateY(26px) scale(.94);filter:blur(8px) drop-shadow(0 0 0 rgba(0,170,255,0));}
+    100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0) drop-shadow(0 0 28px rgba(0,170,255,.5));}
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes pulsePrompt{0%,100%{opacity:.35;}50%{opacity:1;}}
+
+  /* ---------- Stage caption (top) ---------- */
+  #caption{
+    position:fixed;top:42px;left:0;right:0;z-index:40;text-align:center;
+    font-size:15px;font-weight:500;letter-spacing:5px;text-transform:uppercase;
+    color:#cfe9ff;pointer-events:none;opacity:0;transform:translateY(-8px);
+    transition:opacity .8s ease, transform .8s ease;
+    text-shadow:0 0 24px rgba(0,170,255,.4);
+  }
+  #caption .accent-blue{color:var(--blue);}
+  #caption .accent-gold{color:var(--gold);}
+
+  /* ---------- Final (stage 6) ---------- */
+  #final{
+    position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;pointer-events:none;
+    opacity:0;transform:scale(.97);transition:opacity 1.4s ease, transform 1.6s ease;
+  }
+  #final h1{
+    font-size:110px;font-weight:800;letter-spacing:12px;
+    background:linear-gradient(180deg,#ffffff 0%, #ffe7b0 45%, #FF8C00 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 30px rgba(255,160,40,.55));
+  }
+  #final .line{
+    margin-top:18px;font-size:26px;font-weight:300;letter-spacing:5px;text-transform:uppercase;
+    color:#ffe7c2;
+  }
+  #final .line b{font-weight:600;color:#fff;}
+  #survival{margin-top:40px;opacity:.95;}
+  #survival .lbl{font-size:12px;letter-spacing:3px;text-transform:uppercase;fill:#9fb6cc;}
+
+  /* ---------- Stage dots ---------- */
+  #dots{
+    position:fixed;bottom:26px;left:0;right:0;z-index:45;display:flex;
+    gap:11px;align-items:center;justify-content:center;pointer-events:none;
+  }
+  #dots .dot{
+    width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);
+    transition:all .5s cubic-bezier(.16,1,.3,1);
+  }
+  #dots .dot.on{background:#eafaff;width:26px;border-radius:5px;box-shadow:0 0 14px rgba(0,170,255,.7);}
+
+  /* tiny back hint */
+  #hint{
+    position:fixed;bottom:24px;left:24px;z-index:45;font-size:11px;letter-spacing:2px;
+    color:rgba(180,210,235,.35);text-transform:uppercase;pointer-events:none;opacity:0;
+    transition:opacity .6s ease;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="bg"></canvas>
+    <canvas id="scene"></canvas>
+  </div>
+
+  <div id="flash"></div>
+  <div id="vignette"></div>
+
+  <div id="title">
+    <h1>STRIDE</h1>
+    <div class="sub">Dual Immune <span class="gold">Checkpoint</span> Blockade</div>
+    <div class="tap"><span>Tap to begin</span></div>
+  </div>
+
+  <div id="caption"></div>
+
+  <div id="final">
+    <h1>STRIDE</h1>
+    <div class="line"><b>Dual Blockade.</b> Deeper Response.</div>
+    <svg id="survival" width="360" height="150" viewBox="0 0 360 150">
+      <line x1="40" y1="120" x2="340" y2="120" stroke="#2a3a52" stroke-width="1.5"/>
+      <line x1="40" y1="20"  x2="40"  y2="120" stroke="#2a3a52" stroke-width="1.5"/>
+      <text class="lbl" x="150" y="145">Time</text>
+      <text class="lbl" x="10" y="74" transform="rotate(-90 14,74)">OS</text>
+      <path id="curveCtrl" d="M40,30 C120,55 180,92 340,112" fill="none" stroke="#5a6b80" stroke-width="3" stroke-linecap="round"/>
+      <path id="curveStride" d="M40,28 C140,40 210,58 340,72" fill="none" stroke="#FF8C00" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div id="dots"></div>
+  <div id="hint">‹ swipe back</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   STRIDE CLM — Cinematic Mechanism-of-Action presentation
+   Pure vanilla JS. Canvas particle/cell engine + DOM/CSS UI.
+   Design space: 1024 x 768 (iPad landscape), letterboxed.
+   ============================================================ */
+
+const DW = 1024, DH = 768;            // design space
+const TOTAL_STAGES = 7;               // 0..6
+
+// ---- colors ----
+const COL = {
+  bg:'#0a0a1a',
+  blue:'#00AAFF',
+  gold:'#FF8C00',
+  cyan:'#00FFEE',
+  red:'#FF3355',
+  tumor:'#8B0032',
+  tcellDim:'#555555'
+};
+
+// ---------- canvases ----------
+const bgCanvas = document.getElementById('bg');
+const scCanvas = document.getElementById('scene');
+const bgx = bgCanvas.getContext('2d');
+const ctx = scCanvas.getContext('2d');
+
+let scale = 1, offX = 0, offY = 0, DPR = 1;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  scale = Math.min(vw/DW, vh/DH);
+  offX = (vw - DW*scale)/2;
+  offY = (vh - DH*scale)/2;
+  [bgCanvas, scCanvas].forEach(c=>{
+    c.width = Math.round(vw*DPR);
+    c.height = Math.round(vh*DPR);
+    c.style.width = vw+'px';
+    c.style.height = vh+'px';
+  });
+}
+window.addEventListener('resize', resize);
+resize();
+
+// map design coords -> device pixels (used inside setTransform per frame)
+function applyWorld(c, shakeX, shakeY){
+  c.setTransform(DPR,0,0,DPR,0,0);
+  c.translate(offX + (shakeX||0), offY + (shakeY||0));
+  c.scale(scale, scale);
+}
+
+// ---------- math helpers ----------
+const rnd  = (a=1,b=0)=> b + Math.random()*(a-b);
+const clamp= (v,a,b)=> v<a?a:(v>b?b:v);
+const lerp = (a,b,t)=> a+(b-a)*t;
+const TAU = Math.PI*2;
+function approach(cur,target,rate,dt){ // exponential smoothing
+  const k = 1 - Math.exp(-rate*dt);
+  return cur + (target-cur)*k;
+}
+function easeInOut(t){ return t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+
+// ---------- glow sprite cache (for cheap additive neon) ----------
+const glowCache = {};
+function glowSprite(color){
+  if(glowCache[color]) return glowCache[color];
+  const s=128, cv=document.createElement('canvas'); cv.width=cv.height=s;
+  const g=cv.getContext('2d');
+  const grd=g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+  grd.addColorStop(0, color);
+  grd.addColorStop(0.25, color);
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle=grd; g.beginPath(); g.arc(s/2,s/2,s/2,0,TAU); g.fill();
+  glowCache[color]=cv; return cv;
+}
+function drawGlow(c,x,y,r,color,alpha){
+  const sp=glowSprite(color);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=alpha;
+  c.drawImage(sp, x-r, y-r, r*2, r*2);
+  c.globalAlpha=1;
+  c.globalCompositeOperation='source-over';
+}
+
+/* ============================================================
+   PARTICLE SYSTEM (background drift + bursts + disintegration)
+   ============================================================ */
+const particles = [];
+const MAX_PARTICLES = 200;
+function spawnParticle(p){
+  if(particles.length>=MAX_PARTICLES) particles.shift();
+  particles.push(p);
+}
+function burst(x,y,color,count,opt){
+  opt=opt||{};
+  const spd=opt.spd||220, life=opt.life||0.9, size=opt.size||4;
+  for(let i=0;i<count;i++){
+    const a=rnd(TAU), s=rnd(spd, spd*0.25);
+    spawnParticle({
+      x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+      life:rnd(life,life*0.5), max:life, color,
+      r:rnd(size,size*0.4), drag:opt.drag||2.2, glow:true, grav:opt.grav||0
+    });
+  }
+}
+// ambient floating immune cells (background)
+function seedAmbient(){
+  for(let i=0;i<46;i++){
+    spawnParticle({
+      x:rnd(DW), y:rnd(DH),
+      vx:rnd(10,-10), vy:rnd(8,-8),
+      life:Infinity, max:1, color:'rgba(120,180,255,0.5)',
+      r:rnd(2.4,0.8), drag:0, glow:true, ambient:true, grav:0,
+      tw:rnd(TAU), tws:rnd(1.6,0.5)
+    });
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    if(p.ambient){
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.tw+=p.tws*dt;
+      if(p.x<-20)p.x=DW+20; if(p.x>DW+20)p.x=-20;
+      if(p.y<-20)p.y=DH+20; if(p.y>DH+20)p.y=-20;
+      continue;
+    }
+    p.life-=dt;
+    if(p.life<=0){ particles.splice(i,1); continue; }
+    if(p.drag){ const d=Math.exp(-p.drag*dt); p.vx*=d; p.vy*=d; }
+    if(p.grav) p.vy+=p.grav*dt;
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+  }
+}
+function drawParticles(c){
+  for(const p of particles){
+    const a = p.ambient ? (0.25+0.35*(0.5+0.5*Math.sin(p.tw))) : clamp(p.life/p.max,0,1);
+    if(p.glow) drawGlow(c, p.x, p.y, p.r*3.2, p.color, a*0.9);
+    c.globalAlpha=a;
+    c.fillStyle=p.color;
+    c.beginPath(); c.arc(p.x,p.y,p.r,0,TAU); c.fill();
+    c.globalAlpha=1;
+  }
+}
+
+/* ============================================================
+   ANTIBODY (Y-shaped) — flies in, snap-locks onto a receptor
+   ============================================================ */
+function makeAntibody(color){
+  return {
+    color, x:-300, y:-300, scale:1.15, angle:0,
+    visible:false, flying:false, bound:false,
+    blur:14, t:0, dur:1.1,
+    p0:{x:0,y:0}, p1:{x:0,y:0}, p2:{x:0,y:0}, // quadratic bezier
+    onArrive:null, arrived:false
+  };
+}
+function launchAntibody(ab, from, ctrl, to, dur, onArrive){
+  ab.visible=true; ab.flying=true; ab.bound=false; ab.arrived=false;
+  ab.t=0; ab.dur=dur; ab.blur=16;
+  ab.p0={x:from.x,y:from.y}; ab.p1={x:ctrl.x,y:ctrl.y}; ab.p2={x:to.x,y:to.y};
+  ab.x=from.x; ab.y=from.y;
+  ab.onArrive=onArrive;
+}
+function updateAntibody(ab, dt){
+  if(!ab.flying) return;
+  ab.t += dt/ab.dur;
+  const tt = clamp(ab.t,0,1);
+  const e = easeInOut(tt);
+  const u=1-e;
+  // quadratic bezier point
+  const x = u*u*ab.p0.x + 2*u*e*ab.p1.x + e*e*ab.p2.x;
+  const y = u*u*ab.p0.y + 2*u*e*ab.p1.y + e*e*ab.p2.y;
+  // tangent for orientation
+  const dx = 2*u*(ab.p1.x-ab.p0.x) + 2*e*(ab.p2.x-ab.p1.x);
+  const dy = 2*u*(ab.p1.y-ab.p0.y) + 2*e*(ab.p2.y-ab.p1.y);
+  ab.angle = Math.atan2(dy,dx) + Math.PI/2; // Y points toward travel
+  ab.x=x; ab.y=y;
+  ab.blur = lerp(16,0, clamp(tt*1.4,0,1));
+  if(tt>=1 && !ab.arrived){
+    ab.arrived=true; ab.flying=false; ab.bound=true; ab.blur=0;
+    if(ab.onArrive) ab.onArrive();
+  }
+}
+function drawAntibody(c, ab){
+  if(!ab.visible) return;
+  const s=ab.scale;
+  c.save();
+  c.translate(ab.x, ab.y);
+  c.rotate(ab.angle);
+  if(ab.blur>0.3 && c.filter!==undefined){ c.filter='blur('+ab.blur.toFixed(1)+'px)'; }
+  // bound gentle bob
+  const bob = ab.bound ? Math.sin(time*4)*1.2 : 0;
+  c.translate(0,bob);
+  // glow underlay
+  c.globalCompositeOperation='lighter';
+  c.drawImage(glowSprite(ab.color), -34*s, -34*s, 68*s, 68*s);
+  c.globalCompositeOperation='source-over';
+  c.lineCap='round'; c.lineJoin='round';
+  c.strokeStyle=ab.color; c.shadowColor=ab.color; c.shadowBlur=18;
+  c.lineWidth=7*s;
+  // Fc stem
+  c.beginPath(); c.moveTo(0,22*s); c.lineTo(0,0); c.stroke();
+  // two Fab arms
+  c.beginPath(); c.moveTo(0,0); c.lineTo(-15*s,-24*s); c.stroke();
+  c.beginPath(); c.moveTo(0,0); c.lineTo( 15*s,-24*s); c.stroke();
+  // paratope tips
+  c.shadowBlur=10; c.fillStyle='#ffffff';
+  [[-15,-24],[15,-24]].forEach(p=>{
+    c.beginPath(); c.arc(p[0]*s,p[1]*s,4.2*s,0,TAU); c.fill();
+  });
+  // hinge node
+  c.fillStyle=ab.color; c.beginPath(); c.arc(0,1*s,4.6*s,0,TAU); c.fill();
+  c.restore();
+  if(c.filter!==undefined) c.filter='none';
+  c.shadowBlur=0;
+}
+
+/* ============================================================
+   SHOCKWAVE RINGS
+   ============================================================ */
+const rings=[];
+function shockwave(x,y,color,maxR,opt){
+  opt=opt||{};
+  rings.push({x,y,color,r:opt.r0||6,maxR,life:opt.life||0.7,max:opt.life||0.7,w:opt.w||5});
+}
+function updateRings(dt){
+  for(let i=rings.length-1;i>=0;i--){
+    const r=rings[i]; r.life-=dt;
+    if(r.life<=0){rings.splice(i,1);continue;}
+    const p=1-r.life/r.max; r.r=lerp(r.r0||6, r.maxR, easeInOut(p));
+  }
+}
+function drawRings(c){
+  for(const r of rings){
+    const a=clamp(r.life/r.max,0,1);
+    c.globalAlpha=a;
+    c.strokeStyle=r.color; c.shadowColor=r.color; c.shadowBlur=22;
+    c.lineWidth=r.w*a+0.6;
+    c.beginPath(); c.arc(r.x,r.y,r.r,0,TAU); c.stroke();
+  }
+  c.globalAlpha=1; c.shadowBlur=0;
+}
+
+/* ============================================================
+   TUMOR CELL  (right side) — PD-L1 red shields, heartbeat
+   ============================================================ */
+const tumor = {
+  x:770, y:412, baseR:138, r:0, appear:0,
+  shields:[], destroy:0, destroying:false, alive:true,
+  seed:rnd(100)
+};
+function initTumor(){
+  tumor.shields=[];
+  const n=9;
+  for(let i=0;i<n;i++){
+    const a = -Math.PI*0.92 + (i/(n-1))*Math.PI*1.84; // ring facing mostly left/up
+    tumor.shields.push({a, broken:false, glow:rnd(TAU)});
+  }
+}
+function tumorHeartbeat(){
+  // double-thump cardiac-style pulse
+  const bpm=1.15, ph=(time*bpm)%1;
+  let beat=0;
+  beat += Math.exp(-Math.pow((ph-0.0)/0.06,2));
+  beat += 0.6*Math.exp(-Math.pow((ph-0.16)/0.05,2));
+  return beat;
+}
+function updateTumor(dt){
+  const target = stage>=1 ? 1 : 0;
+  tumor.appear = approach(tumor.appear, target, 3.2, dt);
+  if(tumor.destroying){ tumor.destroy = approach(tumor.destroy, 1, 1.1, dt); }
+  const pulse = 1 + tumorHeartbeat()*0.05;
+  tumor.r = tumor.baseR * tumor.appear * pulse * (1 - tumor.destroy*0.25);
+  // disintegration particles
+  if(tumor.destroying && tumor.destroy<0.96 && Math.random()<0.9){
+    const a=rnd(TAU), rr=rnd(tumor.r);
+    spawnParticle({
+      x:tumor.x+Math.cos(a)*rr, y:tumor.y+Math.sin(a)*rr,
+      vx:Math.cos(a)*rnd(140,30)+rnd(60,-60), vy:Math.sin(a)*rnd(140,30)-rnd(30,90),
+      life:rnd(1.4,0.7), max:1.4, color: Math.random()<0.5?COL.tumor:'#ff5a7a',
+      r:rnd(5,2), drag:1.4, glow:true, grav:120
+    });
+  }
+}
+function drawTumor(c){
+  if(tumor.appear<0.01) return;
+  const x=tumor.x,y=tumor.y,r=tumor.r;
+  const fade = 1 - tumor.destroy;
+  // outer menacing glow (pulses with heartbeat)
+  const hb=tumorHeartbeat();
+  drawGlow(c, x, y, r*1.9, '#ff2a55', (0.22+hb*0.22)*tumor.appear*fade);
+  drawGlow(c, x, y, r*1.5, COL.tumor, 0.5*tumor.appear*fade);
+  // body
+  c.save();
+  c.globalAlpha=fade;
+  const grd=c.createRadialGradient(x-r*0.3,y-r*0.35,r*0.1, x,y,r);
+  grd.addColorStop(0,'#c21a4e');
+  grd.addColorStop(0.5,'#8B0032');
+  grd.addColorStop(1,'#43001a');
+  c.fillStyle=grd;
+  c.beginPath();
+  // wobbly membrane
+  const lobes=10;
+  for(let i=0;i<=lobes;i++){
+    const a=i/lobes*TAU;
+    const w = r*(1 + 0.045*Math.sin(a*3+time*1.2+tumor.seed) + 0.03*Math.sin(a*5-time));
+    const px=x+Math.cos(a)*w, py=y+Math.sin(a)*w;
+    if(i===0)c.moveTo(px,py); else c.lineTo(px,py);
+  }
+  c.closePath(); c.fill();
+  // membrane rim
+  c.lineWidth=3; c.strokeStyle='rgba(255,80,120,'+(0.5*fade)+')';
+  c.shadowColor='#ff3a66'; c.shadowBlur=24; c.stroke(); c.shadowBlur=0;
+  // nucleus + organelles
+  c.fillStyle='rgba(40,0,20,0.85)';
+  c.beginPath(); c.arc(x+r*0.12,y+r*0.05,r*0.4,0,TAU); c.fill();
+  c.fillStyle='rgba(255,60,110,0.18)';
+  for(let i=0;i<5;i++){
+    const a=tumor.seed+i*1.7;
+    c.beginPath(); c.arc(x+Math.cos(a)*r*0.5, y+Math.sin(a)*r*0.5, r*0.12,0,TAU); c.fill();
+  }
+  // destruction cracks
+  if(tumor.destroy>0.02){
+    c.strokeStyle='rgba(255,240,200,'+(0.85*tumor.destroy)+')';
+    c.lineWidth=2.5; c.shadowColor='#fff'; c.shadowBlur=18;
+    for(let i=0;i<6;i++){
+      const a=tumor.seed*2+i*1.04;
+      c.beginPath(); c.moveTo(x,y);
+      let cx=x,cy=y;
+      for(let k=0;k<4;k++){
+        cx+=Math.cos(a+rnd(0.5,-0.5))*r*0.3*tumor.destroy;
+        cy+=Math.sin(a+rnd(0.5,-0.5))*r*0.3*tumor.destroy;
+        c.lineTo(cx,cy);
+      }
+      c.stroke();
+    }
+    c.shadowBlur=0;
+  }
+  c.restore();
+  // PD-L1 shields on membrane
+  for(const sh of tumor.shields){
+    if(sh.broken) continue;
+    const px=x+Math.cos(sh.a)*r*1.02, py=y+Math.sin(sh.a)*r*1.02;
+    drawShield(c, px, py, sh.a, hb);
+  }
+}
+function drawShield(c,x,y,ang,hb){
+  const s=1+hb*0.12;
+  c.save(); c.translate(x,y); c.rotate(ang+Math.PI/2);
+  drawGlow(c,0,0,26*s,COL.red,0.55);
+  c.scale(s,s);
+  c.fillStyle='rgba(255,51,85,0.92)';
+  c.strokeStyle='#ffd0da'; c.lineWidth=1.4;
+  c.shadowColor=COL.red; c.shadowBlur=16;
+  c.beginPath();
+  c.moveTo(0,-13); c.lineTo(10,-7); c.lineTo(9,7);
+  c.lineTo(0,14); c.lineTo(-9,7); c.lineTo(-10,-7);
+  c.closePath(); c.fill(); c.stroke();
+  // emblem
+  c.strokeStyle='rgba(255,255,255,0.8)'; c.lineWidth=1.6;
+  c.beginPath(); c.moveTo(0,-6); c.lineTo(0,7); c.stroke();
+  c.shadowBlur=0; c.restore();
+}
+
+/* ============================================================
+   T-CELLS  (left-center) — exhausted->activated, CTLA-4 chains
+   ============================================================ */
+const tcells=[];
+function makeTCell(x,y,opt){
+  opt=opt||{};
+  return {
+    hx:x, hy:y, x, y, r:opt.r||34,
+    energy:0, // 0 grey -> 1 cyan
+    p1:rnd(TAU),p2:rnd(TAU),p3:rnd(TAU),
+    f1:rnd(.55,.3),f2:rnd(1.1,.7),
+    seed:rnd(100),
+    chains:opt.chains!==false, chainBroken:false,
+    isPrimary:!!opt.primary, // tremelimumab target (upper-left)
+    swarm:false, swTarget:null,
+    born:opt.born||0, scale:opt.born?0:1
+  };
+}
+function initTCells(){
+  tcells.length=0;
+  // primary target T-cell — upper-left "lymph node" zone
+  tcells.push(makeTCell(232,206,{primary:true,r:38}));
+  // supporting T-cells left-center
+  tcells.push(makeTCell(330,360,{r:32}));
+  tcells.push(makeTCell(250,470,{r:30}));
+  tcells.push(makeTCell(420,520,{r:30}));
+  tcells.push(makeTCell(430,300,{r:28}));
+}
+function spawnExtraTCells(){
+  const homes=[[300,250],[380,430],[300,560],[470,430],[200,360]];
+  homes.forEach((h,i)=>{
+    const t=makeTCell(h[0],h[1],{r:rnd(30,24),born:i*0.08});
+    t.energy=0.4; t.chains=false; t.scale=0;
+    tcells.push(t);
+  });
+}
+function updateTCells(dt){
+  for(const t of tcells){
+    // birth scale-in
+    if(t.born>0){ t.born-=dt; }
+    const targetScale = t.born>0 ? 0 : 1;
+    t.scale = approach(t.scale, targetScale, 5, dt);
+    // energy target by stage
+    let eT=0;
+    if(stage===1) eT=0.0;
+    else if(stage===2) eT=0.28;
+    else if(stage===3) eT=0.5;
+    else if(stage===4) eT=0.62;
+    else if(stage>=5) eT=1.0;
+    t.energy = approach(t.energy, eT, 2.4, dt);
+    // organic wander amplitude grows with energy
+    const amp = 6 + t.energy*22;
+    const sp = 0.6 + t.energy*1.4;
+    const ox = (Math.sin(time*t.f1*sp+t.p1)*amp + Math.sin(time*t.f2*sp+t.p2)*amp*0.5);
+    const oy = (Math.cos(time*t.f1*sp+t.p3)*amp + Math.sin(time*t.f2*sp*0.8+t.p1)*amp*0.5);
+    let tx, ty;
+    if(t.swarm && t.swTarget){
+      // move home toward attack ring near tumor
+      t.hx = approach(t.hx, t.swTarget.x, 2.2, dt);
+      t.hy = approach(t.hy, t.swTarget.y, 2.2, dt);
+    }
+    tx = t.hx + ox; ty = t.hy + oy;
+    t.x = approach(t.x, tx, 8, dt);
+    t.y = approach(t.y, ty, 8, dt);
+    // energetic trails when highly active
+    if(t.energy>0.85 && Math.random()<0.25){
+      spawnParticle({x:t.x+rnd(t.r,-t.r),y:t.y+rnd(t.r,-t.r),
+        vx:rnd(20,-20),vy:rnd(20,-20),life:rnd(.5,.2),max:.5,
+        color:COL.cyan,r:rnd(2.2,1),drag:3,glow:true,grav:0});
+    }
+  }
+}
+function tcellColor(e){
+  // grey #555 -> cyan-white #00FFEE
+  const r=Math.round(lerp(0x55,0x9f,e));
+  const g=Math.round(lerp(0x55,0xff,e));
+  const b=Math.round(lerp(0x55,0xf2,e));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawTCells(c){
+  for(const t of tcells){
+    if(t.scale<0.01) continue;
+    const e=t.energy, col=tcellColor(e), r=t.r*t.scale;
+    const glowCol = e<0.4? 'rgba(120,140,170,1)' : COL.cyan;
+    drawGlow(c,t.x,t.y, r*(1.6+e*1.1), glowCol, (0.12+e*0.6));
+    // blobby organic cell
+    c.save(); c.globalAlpha=clamp(t.scale,0,1);
+    c.beginPath();
+    const lobes=9;
+    for(let i=0;i<=lobes;i++){
+      const a=i/lobes*TAU;
+      const w=r*(1+0.10*Math.sin(a*3+time*1.6*(0.5+e)+t.seed)+0.07*Math.sin(a*4-time*1.1));
+      const px=t.x+Math.cos(a)*w, py=t.y+Math.sin(a)*w;
+      if(i===0)c.moveTo(px,py);else c.lineTo(px,py);
+    }
+    c.closePath();
+    const grd=c.createRadialGradient(t.x-r*0.3,t.y-r*0.3,r*0.1,t.x,t.y,r);
+    grd.addColorStop(0, e>0.5?'#dffffb':'#7a7f88');
+    grd.addColorStop(0.6, col);
+    grd.addColorStop(1, e>0.5?'#007a72':'#2c2f36');
+    c.fillStyle=grd;
+    c.shadowColor=glowCol; c.shadowBlur=e*26; c.fill(); c.shadowBlur=0;
+    // membrane
+    c.lineWidth=2; c.strokeStyle= e>0.5?'rgba(180,255,250,.9)':'rgba(150,160,180,.5)'; c.stroke();
+    // nucleus
+    c.fillStyle= e>0.5?'rgba(0,80,75,.6)':'rgba(20,22,28,.7)';
+    c.beginPath(); c.arc(t.x+r*0.1,t.y+r*0.05,r*0.42,0,TAU); c.fill();
+    c.restore();
+    // CTLA-4 chains
+    if(t.chains && !t.chainBroken && chainsVisible){
+      drawChains(c,t,r);
+    }
+  }
+}
+let chainsVisible=false;
+function drawChains(c,t,r){
+  const n=3;
+  c.save();
+  for(let i=0;i<n;i++){
+    const a = t.seed + i*(TAU/n) + Math.sin(time*0.8+i)*0.1;
+    const px=t.x+Math.cos(a)*r*1.0, py=t.y+Math.sin(a)*r*1.0;
+    drawGlow(c,px,py,18,COL.gold,0.5);
+    // padlock
+    c.save(); c.translate(px,py); c.rotate(a+Math.PI/2);
+    c.strokeStyle=COL.gold; c.shadowColor=COL.gold; c.shadowBlur=14; c.lineWidth=3;
+    // shackle
+    c.beginPath(); c.arc(0,-6,5,Math.PI,0); c.stroke();
+    // body
+    c.fillStyle='rgba(255,140,0,0.9)';
+    c.beginPath(); c.rect(-7,-2,14,12); c.fill(); c.stroke();
+    c.shadowBlur=0; c.restore();
+  }
+  c.restore();
+}
+
+/* ============================================================
+   ANTIBODIES instances
+   ============================================================ */
+const durva = makeAntibody(COL.blue);   // anti PD-L1  -> tumor
+const treme = makeAntibody(COL.gold);   // anti CTLA-4 -> T-cell
+
+/* ============================================================
+   SPATIAL LABELS  (minimal, in-canvas)
+   ============================================================ */
+function drawLabels(c){
+  c.save();
+  c.textAlign='center'; c.font='600 13px -apple-system,Helvetica,Arial';
+  // Lymph node zone (upper-left)
+  if(stage>=1){
+    const a = clamp((stage>=1?1:0),0,1)*0.6;
+    // faint zone ring
+    drawGlow(c,232,200,150,'rgba(255,180,60,1)', stage===4? 0.10 : 0.05);
+    c.globalAlpha=a; c.fillStyle='rgba(255,200,120,0.8)';
+    c.fillText('LYMPH NODE', 232, 92);
+    c.font='500 10px -apple-system,Helvetica,Arial';
+    c.fillStyle='rgba(255,200,120,0.5)';
+    c.fillText('· T-cell priming ·', 232, 108);
+  }
+  // Tumor site label
+  if(stage>=1){
+    c.globalAlpha=0.65; c.font='600 13px -apple-system,Helvetica,Arial';
+    c.fillStyle='rgba(255,130,160,0.85)';
+    c.fillText('TUMOR', tumor.x, tumor.y - tumor.baseR - 26);
+  }
+  c.restore();
+  c.globalAlpha=1;
+}
+
+/* ============================================================
+   STAGE MANAGEMENT
+   ============================================================ */
+let stage=0;
+let stageTime=0;
+let time=0;            // global clock (s)
+let last=performance.now();
+const fired={};        // one-shot event flags per stage-entry
+
+// screen shake
+let shake=0, shakeX=0, shakeY=0;
+function kick(mag){ shake=Math.max(shake,mag); }
+
+const titleEl=document.getElementById('title');
+const captionEl=document.getElementById('caption');
+const finalEl=document.getElementById('final');
+const flashEl=document.getElementById('flash');
+const hintEl=document.getElementById('hint');
+const dotsEl=document.getElementById('dots');
+
+// build dots
+for(let i=0;i<TOTAL_STAGES;i++){
+  const d=document.createElement('div'); d.className='dot'+(i===0?' on':''); dotsEl.appendChild(d);
+}
+const dotEls=[...dotsEl.children];
+
+const CAPTIONS=[
+  '',
+  'THE TUMOR MICROENVIRONMENT &nbsp;·&nbsp; IMMUNE ESCAPE',
+  '<span class="accent-blue">DURVALUMAB</span> &nbsp;·&nbsp; ANTI&#8209;PD&#8209;L1 &nbsp;·&nbsp; AT THE TUMOR',
+  'T&#8209;CELL PRIMED &nbsp;—&nbsp; BUT CTLA&#8209;4 HOLDS THE BRAKE',
+  '<span class="accent-gold">TREMELIMUMAB</span> &nbsp;·&nbsp; ANTI&#8209;CTLA&#8209;4 &nbsp;·&nbsp; AT THE T&#8209;CELL',
+  'DUAL BLOCKADE &nbsp;—&nbsp; SYNERGY UNLEASHED',
+  ''
+];
+
+function setCaption(html){
+  captionEl.style.opacity='0';
+  captionEl.style.transform='translateY(-8px)';
+  setTimeout(()=>{
+    if(!html){ return; }
+    captionEl.innerHTML=html;
+    captionEl.style.opacity='1';
+    captionEl.style.transform='translateY(0)';
+  },180);
+}
+
+function flash(strength,hold){
+  flashEl.style.transition='opacity .18s ease-out';
+  flashEl.style.opacity=strength;
+  setTimeout(()=>{
+    flashEl.style.transition='opacity '+(hold||0.7)+'s ease-out';
+    flashEl.style.opacity='0';
+  }, 120);
+}
+
+function updateDots(){
+  dotEls.forEach((d,i)=> d.classList.toggle('on', i===stage));
+}
+
+function enterStage(s){
+  stage=clamp(s,0,TOTAL_STAGES-1);
+  stageTime=0;
+  for(const k in fired) delete fired[k];
+  updateDots();
+
+  // UI
+  titleEl.style.opacity = stage===0?'1':'0';
+  titleEl.style.transform = stage===0?'scale(1)':'scale(1.08)';
+  titleEl.style.pointerEvents='none';
+  finalEl.style.opacity='0'; finalEl.style.transform='scale(.97)';
+  hintEl.style.opacity = (stage>0 && stage<6)?'1':'0';
+  setCaption(CAPTIONS[stage]);
+
+  // stage-specific setup
+  if(stage<3){ chainsVisible=false; }
+  if(stage>=3){ chainsVisible=true; }
+
+  if(stage<2){ durva.visible=false; durva.bound=false; }
+  if(stage<4){ treme.visible=false; treme.bound=false; }
+
+  // reset shields/chains when stepping backward
+  if(stage<2){ tumor.shields.forEach(sh=>sh.broken=false); }
+  if(stage<4){ tcells.forEach(t=>t.chainBroken=false); }
+
+  if(stage<5){
+    tumor.destroying=false; tumor.destroy=0;
+    tcells.forEach(t=>{ t.swarm=false; t.swTarget=null; });
+    // remove extra spawned cells when going back below 5
+    if(tcells.length>5) tcells.length=5;
+    tcells.forEach((t,i)=>{ /* homes restored on init only */ });
+  }
+
+  // ENTRY ANIMATIONS
+  if(stage===0){
+    titleEl.style.pointerEvents='none';
+  }
+  if(stage===1){
+    // tumor + exhausted t-cells already there; gentle reveal
+  }
+  if(stage===2){
+    // Durvalumab flies from left to a left-facing PD-L1 shield
+    const sh = tumor.shields[Math.floor(tumor.shields.length*0.5)];
+    sh.targetRef=true;
+    const tx=tumor.x+Math.cos(sh.a)*tumor.baseR*1.0;
+    const ty=tumor.y+Math.sin(sh.a)*tumor.baseR*1.0;
+    launchAntibody(durva, {x:-160,y:430}, {x:300,y:300}, {x:tx,y:ty}, 1.15, ()=>{
+      // SNAP
+      kick(16);
+      flash(0.32,0.6);
+      shockwave(tx,ty,COL.blue,180,{w:6,life:0.75});
+      shockwave(tx,ty,'#ffffff',90,{w:3,life:0.45});
+      burst(tx,ty,COL.blue,26,{spd:260,life:0.9,size:4});
+      // shatter all shields
+      tumor.shields.forEach(s=>{
+        if(s.broken)return; s.broken=true;
+        const px=tumor.x+Math.cos(s.a)*tumor.r*1.02, py=tumor.y+Math.sin(s.a)*tumor.r*1.02;
+        burst(px,py,COL.red,10,{spd:170,life:0.8,size:3.5,grav:60});
+      });
+    });
+  }
+  if(stage===3){
+    // tension — chains appear (handled by chainsVisible)
+    setTimeout(()=>{ if(stage===3) kick(4); }, 200);
+  }
+  if(stage===4){
+    // Tremelimumab flies from UPPER-LEFT to primary T-cell CTLA-4
+    const t=tcells.find(c=>c.isPrimary)||tcells[0];
+    const tx=t.x, ty=t.y-6;
+    launchAntibody(treme, {x:-150,y:-120}, {x:60,y:60}, {x:tx,y:ty}, 1.2, ()=>{
+      kick(15);
+      flash(0.30,0.6);
+      shockwave(tx,ty,COL.gold,150,{w:6,life:0.75});
+      shockwave(tx,ty,'#fff',80,{w:3,life:0.45});
+      burst(tx,ty,COL.gold,24,{spd:240,life:0.9,size:4});
+      // shatter chains on all chained t-cells
+      tcells.forEach(c=>{ if(c.chains){ c.chainBroken=true;
+        burst(c.x,c.y,COL.gold,8,{spd:160,life:0.7,size:3,grav:40});
+      }});
+    });
+  }
+  if(stage===5){
+    // SYNERGY — both bound, t-cells max out + multiply + converge
+    durva.visible=true; durva.bound=true;
+    treme.visible=true; treme.bound=true;
+    spawnExtraTCells();
+    // convergence flash (blue + orange -> white/gold) mid-screen
+    setTimeout(()=>{ if(stage!==5)return;
+      const cx=(durva.x+treme.x)/2, cy=(durva.y+treme.y)/2;
+      flash(0.55,1.0); kick(12);
+      shockwave(DW/2,DH/2,'#ffffff',420,{w:7,life:1.0});
+      shockwave(DW/2,DH/2,COL.gold,300,{w:5,life:0.9});
+      burst(DW/2,DH/2,COL.cyan,40,{spd:340,life:1.0,size:4});
+    },650);
+    // start swarming toward tumor
+    setTimeout(()=>{ if(stage<5)return; startSwarm(); },1100);
+  }
+  if(stage===6){
+    durva.visible=true; durva.bound=true;
+    treme.visible=true; treme.bound=true;
+    chainsVisible=false;
+    if(tcells.length<=5) spawnExtraTCells();
+    startSwarm(true);
+    // tumor destruction after cells arrive
+    setTimeout(()=>{ if(stage!==6)return;
+      tumor.destroying=true; kick(20); flash(0.4,0.9);
+      shockwave(tumor.x,tumor.y,'#ffffff',360,{w:8,life:1.1});
+      burst(tumor.x,tumor.y,'#ff6a88',40,{spd:300,life:1.2,size:5,grav:80});
+    },900);
+    // brighten + final text
+    setTimeout(()=>{ if(stage!==6)return; flash(0.5,1.6); },1400);
+    setTimeout(()=>{ if(stage!==6)return;
+      finalEl.style.opacity='1'; finalEl.style.transform='scale(1)';
+      animateSurvival();
+    },1700);
+  }
+}
+
+function startSwarm(close){
+  const ring = close? tumor.baseR*0.78 : tumor.baseR+46;
+  const list=tcells;
+  list.forEach((t,i)=>{
+    const a = Math.PI*0.55 + (i/(list.length))*Math.PI*0.9; // left hemisphere of tumor
+    t.swarm=true;
+    t.swTarget={ x:tumor.x+Math.cos(a)*ring, y:tumor.y+Math.sin(a)*ring };
+  });
+}
+
+// survival curve dash animation
+function animateSurvival(){
+  ['curveCtrl','curveStride'].forEach((id,idx)=>{
+    const p=document.getElementById(id);
+    const len=p.getTotalLength();
+    p.style.transition='none';
+    p.style.strokeDasharray=len; p.style.strokeDashoffset=len;
+    // force reflow
+    p.getBoundingClientRect();
+    p.style.transition='stroke-dashoffset 1.6s ease '+(idx*0.25)+'s';
+    p.style.strokeDashoffset='0';
+  });
+}
+
+/* ============================================================
+   NAVIGATION (advance / back)
+   ============================================================ */
+function next(){ if(stage<TOTAL_STAGES-1) enterStage(stage+1); }
+function prev(){ if(stage>0){
+    // rebuild scene cleanly when going back to keep state consistent
+    const target=stage-1;
+    if(target<5){ initTCells(); }
+    enterStage(target);
+  }
+}
+
+/* ============================================================
+   INPUT — tap to advance, swipe back, prevent scroll
+   ============================================================ */
+let touchStartX=0, touchStartY=0, touchStartT=0, moved=false;
+function onStart(x,y){ touchStartX=x; touchStartY=y; touchStartT=performance.now(); moved=false; }
+function onMove(x,y){ if(Math.hypot(x-touchStartX,y-touchStartY)>14) moved=true; }
+function onEnd(x,y){
+  const dx=x-touchStartX, dy=y-touchStartY, dt=performance.now()-touchStartT;
+  if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.4){
+    if(dx>0) prev(); else next();
+    return;
+  }
+  if(!moved && dt<600){ next(); }
+}
+const root=document.body;
+root.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.changedTouches[0]; onStart(t.clientX,t.clientY); }, {passive:false});
+root.addEventListener('touchmove',  e=>{ e.preventDefault(); const t=e.changedTouches[0]; onMove(t.clientX,t.clientY); }, {passive:false});
+root.addEventListener('touchend',   e=>{ e.preventDefault(); const t=e.changedTouches[0]; onEnd(t.clientX,t.clientY); }, {passive:false});
+// mouse fallback for desktop testing
+root.addEventListener('mousedown', e=>onStart(e.clientX,e.clientY));
+root.addEventListener('mousemove', e=>{ if(e.buttons) onMove(e.clientX,e.clientY); });
+root.addEventListener('mouseup',   e=>onEnd(e.clientX,e.clientY));
+window.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key===' ') next();
+  else if(e.key==='ArrowLeft') prev();
+});
+document.addEventListener('gesturestart', e=>e.preventDefault());
+
+/* ============================================================
+   BACKGROUND CANVAS (slow drifting depth particles + nebula)
+   ============================================================ */
+const stars=[];
+for(let i=0;i<70;i++){
+  stars.push({x:rnd(DW),y:rnd(DH),r:rnd(1.6,0.4),tw:rnd(TAU),s:rnd(1.4,0.4),vx:rnd(4,-4),vy:rnd(3,-3)});
+}
+function drawBackground(dt){
+  applyWorld(bgx,0,0);
+  bgx.clearRect(0,0,DW,DH);
+  // nebula blobs
+  bgx.globalCompositeOperation='lighter';
+  const neb=[[260,200,'rgba(255,140,0,0.05)',260],[770,412,'rgba(255,40,90,0.06)',300],[400,440,'rgba(0,120,255,0.05)',260]];
+  for(const n of neb){
+    const g=bgx.createRadialGradient(n[0],n[1],0,n[0],n[1],n[3]);
+    g.addColorStop(0,n[2]); g.addColorStop(1,'rgba(0,0,0,0)');
+    bgx.fillStyle=g; bgx.fillRect(n[0]-n[3],n[1]-n[3],n[3]*2,n[3]*2);
+  }
+  bgx.globalCompositeOperation='source-over';
+  // stars
+  for(const s of stars){
+    s.tw+=s.s*dt; s.x+=s.vx*dt; s.y+=s.vy*dt;
+    if(s.x<0)s.x=DW; if(s.x>DW)s.x=0; if(s.y<0)s.y=DH; if(s.y>DH)s.y=0;
+    const a=0.3+0.5*(0.5+0.5*Math.sin(s.tw));
+    bgx.globalAlpha=a; bgx.fillStyle='#bcd8ff';
+    bgx.beginPath(); bgx.arc(s.x,s.y,s.r,0,TAU); bgx.fill();
+  }
+  bgx.globalAlpha=1;
+}
+
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
+function frame(now){
+  let dt=(now-last)/1000; last=now;
+  if(dt>0.05) dt=0.05;          // clamp big gaps
+  time+=dt; stageTime+=dt;
+
+  // shake decay
+  shake=approach(shake,0,6,dt);
+  shakeX=rnd(shake,-shake); shakeY=rnd(shake,-shake);
+
+  // updates
+  updateParticles(dt);
+  updateRings(dt);
+  updateTumor(dt);
+  updateTCells(dt);
+  updateAntibody(durva,dt);
+  updateAntibody(treme,dt);
+
+  // ----- render background -----
+  drawBackground(dt);
+
+  // ----- render scene -----
+  applyWorld(ctx, shakeX, shakeY);
+  ctx.clearRect(-200,-200,DW+400,DH+400);
+
+  // ambient drift particles behind
+  drawParticles(ctx);
+
+  drawLabels(ctx);
+
+  // draw order: tumor (right), t-cells (left), antibodies on top
+  drawTumor(ctx);
+  drawTCells(ctx);
+  drawRings(ctx);
+  drawAntibody(ctx, durva);
+  drawAntibody(ctx, treme);
+
+  // foreground burst particles already in particles[]
+
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  seedAmbient();
+  initTumor();
+  initTCells();
+  enterStage(0);
+  last=performance.now();
+  requestAnimationFrame(frame);
+}
+init();
+
+})();
+</script>
+</body>
+</html>
