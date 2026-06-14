@@ -567,13 +567,13 @@ function updateTCells(dt){
     if(t.born>0){ t.born-=dt; }
     const targetScale = t.born>0 ? 0 : 1;
     t.scale = approach(t.scale, targetScale, 5, dt);
-    // energy target by stage
+    // energy target by stage (priming-first cascade)
     let eT=0;
-    if(stage===1) eT=0.0;
-    else if(stage===2) eT=0.28;
-    else if(stage===3) eT=0.5;
-    else if(stage===4) eT=0.62;
-    else if(stage>=5) eT=1.0;
+    if(stage<=1) eT=0.0;        // exhausted / braked by CTLA-4
+    else if(stage===2) eT=0.45; // Tremelimumab releases the brake -> priming begins
+    else if(stage===3) eT=0.62; // primed & expanded (tumor PD-L1 still up)
+    else if(stage===4) eT=0.78; // Durvalumab frees the effector phase
+    else if(stage>=5) eT=1.0;   // full dual-blockade cytotoxicity
     t.energy = approach(t.energy, eT, 2.4, dt);
     // organic wander amplitude grows with energy
     const amp = 6 + t.energy*22;
@@ -675,8 +675,8 @@ function drawLabels(c){
   // Lymph node zone (upper-left)
   if(stage>=1){
     const a = clamp((stage>=1?1:0),0,1)*0.6;
-    // faint zone ring
-    drawGlow(c,232,200,150,'rgba(255,180,60,1)', stage===4? 0.10 : 0.05);
+    // faint zone ring — brightens during the priming stage (Tremelimumab)
+    drawGlow(c,232,200,150,'rgba(255,180,60,1)', stage===2? 0.12 : 0.05);
     c.globalAlpha=a; c.fillStyle='rgba(255,200,120,0.8)';
     c.fillText('LYMPH NODE', 232, 92);
     c.font='500 10px -apple-system,Helvetica,Arial';
@@ -722,9 +722,9 @@ const dotEls=[...dotsEl.children];
 const CAPTIONS=[
   '',
   'THE TUMOR MICROENVIRONMENT &nbsp;·&nbsp; IMMUNE ESCAPE',
-  '<span class="accent-blue">DURVALUMAB</span> &nbsp;·&nbsp; ANTI&#8209;PD&#8209;L1 &nbsp;·&nbsp; AT THE TUMOR',
-  'T&#8209;CELL PRIMED &nbsp;—&nbsp; BUT CTLA&#8209;4 HOLDS THE BRAKE',
-  '<span class="accent-gold">TREMELIMUMAB</span> &nbsp;·&nbsp; ANTI&#8209;CTLA&#8209;4 &nbsp;·&nbsp; AT THE T&#8209;CELL',
+  '<span class="accent-gold">TREMELIMUMAB</span> &nbsp;·&nbsp; ANTI&#8209;CTLA&#8209;4 &nbsp;·&nbsp; PRIMING AT THE LYMPH NODE',
+  'PRIMING UNLEASHED &nbsp;—&nbsp; T&#8209;CELLS EXPAND &nbsp;·&nbsp; TUMOR STILL SHIELDED',
+  '<span class="accent-blue">DURVALUMAB</span> &nbsp;·&nbsp; ANTI&#8209;PD&#8209;L1 &nbsp;·&nbsp; EFFECTOR PHASE AT THE TUMOR',
   'DUAL BLOCKADE &nbsp;—&nbsp; SYNERGY UNLEASHED',
   ''
 ];
@@ -768,23 +768,24 @@ function enterStage(s){
   setCaption(CAPTIONS[stage]);
 
   // stage-specific setup
-  if(stage<3){ chainsVisible=false; }
-  if(stage>=3){ chainsVisible=true; }
+  // CTLA-4 brake is shown from the very first scene (it gates priming);
+  // Tremelimumab releases it FIRST (stage 2), Durvalumab frees PD-L1 LATER (stage 4).
+  chainsVisible = stage>=1;
 
-  if(stage<2){ durva.visible=false; durva.bound=false; }
-  if(stage<4){ treme.visible=false; treme.bound=false; }
+  // Tremelimumab acts first (stage 2), Durvalumab second (stage 4)
+  if(stage<2){ treme.visible=false; treme.bound=false; }
+  if(stage<4){ durva.visible=false; durva.bound=false; }
 
-  // reset shields/chains when stepping backward
-  if(stage<2){ tumor.shields.forEach(sh=>sh.broken=false); }
-  if(stage<4){ tcells.forEach(t=>t.chainBroken=false); }
+  // reset receptors when stepping backward
+  if(stage<2){ tcells.forEach(t=>t.chainBroken=false); }   // CTLA-4 chains intact again
+  if(stage<4){ tumor.shields.forEach(sh=>sh.broken=false); } // PD-L1 shields intact again
 
   if(stage<5){
     tumor.destroying=false; tumor.destroy=0;
     tcells.forEach(t=>{ t.swarm=false; t.swTarget=null; });
-    // remove extra spawned cells when going back below 5
-    if(tcells.length>5) tcells.length=5;
-    tcells.forEach((t,i)=>{ /* homes restored on init only */ });
   }
+  // priming proliferation happens at stage 3; remove the expanded clones when below it
+  if(stage<3){ if(tcells.length>5) initTCells(); }
 
   // ENTRY ANIMATIONS
   if(stage===0){
@@ -794,32 +795,7 @@ function enterStage(s){
     // tumor + exhausted t-cells already there; gentle reveal
   }
   if(stage===2){
-    // Durvalumab flies from left to a left-facing PD-L1 shield
-    const sh = tumor.shields[Math.floor(tumor.shields.length*0.5)];
-    sh.targetRef=true;
-    const tx=tumor.x+Math.cos(sh.a)*tumor.baseR*1.0;
-    const ty=tumor.y+Math.sin(sh.a)*tumor.baseR*1.0;
-    launchAntibody(durva, {x:-160,y:430}, {x:300,y:300}, {x:tx,y:ty}, 1.15, ()=>{
-      // SNAP
-      kick(16);
-      flash(0.32,0.6);
-      shockwave(tx,ty,COL.blue,180,{w:6,life:0.75});
-      shockwave(tx,ty,'#ffffff',90,{w:3,life:0.45});
-      burst(tx,ty,COL.blue,26,{spd:260,life:0.9,size:4});
-      // shatter all shields
-      tumor.shields.forEach(s=>{
-        if(s.broken)return; s.broken=true;
-        const px=tumor.x+Math.cos(s.a)*tumor.r*1.02, py=tumor.y+Math.sin(s.a)*tumor.r*1.02;
-        burst(px,py,COL.red,10,{spd:170,life:0.8,size:3.5,grav:60});
-      });
-    });
-  }
-  if(stage===3){
-    // tension — chains appear (handled by chainsVisible)
-    setTimeout(()=>{ if(stage===3) kick(4); }, 200);
-  }
-  if(stage===4){
-    // Tremelimumab flies from UPPER-LEFT to primary T-cell CTLA-4
+    // PRIMING FIRST — Tremelimumab flies from UPPER-LEFT (lymph node) to T-cell CTLA-4
     const t=tcells.find(c=>c.isPrimary)||tcells[0];
     const tx=t.x, ty=t.y-6;
     launchAntibody(treme, {x:-150,y:-120}, {x:60,y:60}, {x:tx,y:ty}, 1.2, ()=>{
@@ -828,17 +804,47 @@ function enterStage(s){
       shockwave(tx,ty,COL.gold,150,{w:6,life:0.75});
       shockwave(tx,ty,'#fff',80,{w:3,life:0.45});
       burst(tx,ty,COL.gold,24,{spd:240,life:0.9,size:4});
-      // shatter chains on all chained t-cells
+      // shatter CTLA-4 chains on all chained T-cells — priming released
       tcells.forEach(c=>{ if(c.chains){ c.chainBroken=true;
         burst(c.x,c.y,COL.gold,8,{spd:160,life:0.7,size:3,grav:40});
       }});
     });
   }
+  if(stage===3){
+    // PRIMING EFFECT — clonal expansion of primed T-cells (tumor PD-L1 still shielded)
+    treme.visible=true; treme.bound=true;
+    if(tcells.length<=5) spawnExtraTCells();
+    setTimeout(()=>{ if(stage===3){ kick(5);
+      const t=tcells.find(c=>c.isPrimary)||tcells[0];
+      shockwave(t.x,t.y,COL.cyan,120,{w:3,life:0.7});
+    }}, 200);
+  }
+  if(stage===4){
+    // EFFECTOR PHASE — Durvalumab flies from left to a left-facing PD-L1 shield
+    treme.visible=true; treme.bound=true;
+    if(tcells.length<=5) spawnExtraTCells();   // primed clones persist from stage 3
+    const sh = tumor.shields[Math.floor(tumor.shields.length*0.5)];
+    const tx=tumor.x+Math.cos(sh.a)*tumor.baseR*1.0;
+    const ty=tumor.y+Math.sin(sh.a)*tumor.baseR*1.0;
+    launchAntibody(durva, {x:-160,y:430}, {x:300,y:300}, {x:tx,y:ty}, 1.15, ()=>{
+      kick(16);
+      flash(0.32,0.6);
+      shockwave(tx,ty,COL.blue,180,{w:6,life:0.75});
+      shockwave(tx,ty,'#ffffff',90,{w:3,life:0.45});
+      burst(tx,ty,COL.blue,26,{spd:260,life:0.9,size:4});
+      // shatter all PD-L1 shields
+      tumor.shields.forEach(s=>{
+        if(s.broken)return; s.broken=true;
+        const px=tumor.x+Math.cos(s.a)*tumor.r*1.02, py=tumor.y+Math.sin(s.a)*tumor.r*1.02;
+        burst(px,py,COL.red,10,{spd:170,life:0.8,size:3.5,grav:60});
+      });
+    });
+  }
   if(stage===5){
-    // SYNERGY — both bound, t-cells max out + multiply + converge
+    // SYNERGY — both checkpoints blocked, T-cells max out + converge
     durva.visible=true; durva.bound=true;
     treme.visible=true; treme.bound=true;
-    spawnExtraTCells();
+    if(tcells.length<=5) spawnExtraTCells();
     // convergence flash (blue + orange -> white/gold) mid-screen
     setTimeout(()=>{ if(stage!==5)return;
       const cx=(durva.x+treme.x)/2, cy=(durva.y+treme.y)/2;
