@@ -340,17 +340,19 @@
    - 이미지는 아래 경로(images/...)에 실제 파일을 넣으면 자동 표시됩니다.
    - 파일이 없으면 자리표시(placeholder)가 보입니다.
    ============================================================ */
-/* images: 확장자 없이 '기본 경로'만 적습니다. (예: 'images/A')
-   → .jpg / .png / .jpeg / .webp / .heic 를 자동으로 찾아서 표시합니다.
-   한 사례에 사진이 여러 장이면 'images/B-1','images/B-2' 처럼 추가하세요. */
+/* images: '파일 이름'만 적습니다 (확장자·폴더 없이).
+   → 'A', 'B-1' 처럼만 적으면, 저장소 루트와 images/ 폴더 양쪽에서
+     .png/.jpg/.jpeg/.webp/.heic 를 자동으로 찾아 표시합니다.
+   한 사례에 사진이 여러 장이면 'B-1','B-2' 처럼 추가하세요. */
 const CANDIDATES = [
-  { id:'A', name:'A 사례', images:['images/A'] },
-  { id:'B', name:'B 사례', images:['images/B-1','images/B-2'] },
-  { id:'C', name:'C 사례', images:['images/C'] },
-  { id:'D', name:'D 사례', images:['images/D-1','images/D-2','images/D-3'] },
-  { id:'E', name:'E 사례', images:['images/E-1','images/E-2','images/E-3','images/E-4'] },
+  { id:'A', name:'A 사례', images:['A'] },
+  { id:'B', name:'B 사례', images:['B-1','B-2'] },
+  { id:'C', name:'C 사례', images:['C'] },
+  { id:'D', name:'D 사례', images:['D-1','D-2','D-3'] },
+  { id:'E', name:'E 사례', images:['E-1','E-2','E-3','E-4'] },
 ];
-const IMG_EXTS = ['jpg','jpeg','png','webp','heic','JPG','PNG'];  // 자동 탐색 확장자
+const IMG_DIRS = ['', 'images/'];                               // 찾아볼 폴더(루트 + images/)
+const IMG_EXTS = ['png','jpg','jpeg','webp','heic','PNG','JPG']; // 찾아볼 확장자
 const MAX_VOTES = 3;          // 1인당 최대 표수
 
 /* 관리자 비밀번호 — 반드시 본인만 아는 값으로 바꾸세요 */
@@ -441,16 +443,21 @@ let adminAuthed = false;
 const candWrap = document.getElementById("candidates");
 const phHTML = (label)=>`<div class="ph"><div class="pic">🖼️</div><div>${label}<br><span style="opacity:.7">이미지 준비 중</span></div></div>`;
 
-/* 확장자를 차례로 시도하며 이미지를 로드. 모두 실패하면 onFail() 호출 */
-function loadSmartImg(imgEl, base, {onOk, onFail}={}){
-  let i=0;
+/* 이름 하나로 폴더×확장자 조합을 차례로 시도. 모두 실패하면 onFail() 호출 */
+function candidateUrls(name){
+  const urls=[];
+  for(const d of IMG_DIRS) for(const e of IMG_EXTS) urls.push(`${d}${name}.${e}`);
+  return urls;
+}
+function loadSmartImg(imgEl, name, {onOk, onFail}={}){
+  const urls=candidateUrls(name); let i=0;
   imgEl.onload = ()=>{ if(onOk) onOk(); };
   imgEl.onerror = ()=>{
     i++;
-    if(i<IMG_EXTS.length){ imgEl.src = `${base}.${IMG_EXTS[i]}`; }
+    if(i<urls.length){ imgEl.src = urls[i]; }
     else { imgEl.onerror=null; imgEl.style.display="none"; if(onFail) onFail(); }
   };
-  imgEl.src = `${base}.${IMG_EXTS[0]}`;
+  imgEl.src = urls[0];
 }
 
 function buildCards(){
