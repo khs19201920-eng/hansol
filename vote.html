@@ -21,6 +21,7 @@
     --radius:16px;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  [hidden]{display:none !important;}
   html,body{
     background:var(--bg);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
@@ -339,13 +340,17 @@
    - 이미지는 아래 경로(images/...)에 실제 파일을 넣으면 자동 표시됩니다.
    - 파일이 없으면 자리표시(placeholder)가 보입니다.
    ============================================================ */
+/* images: 확장자 없이 '기본 경로'만 적습니다. (예: 'images/A')
+   → .jpg / .png / .jpeg / .webp / .heic 를 자동으로 찾아서 표시합니다.
+   한 사례에 사진이 여러 장이면 'images/B-1','images/B-2' 처럼 추가하세요. */
 const CANDIDATES = [
-  { id:'A', name:'A 사례', images:['images/A-1.jpg'] },
-  { id:'B', name:'B 사례', images:['images/B-1.jpg','images/B-2.jpg'] },
-  { id:'C', name:'C 사례', images:['images/C-1.jpg'] },
-  { id:'D', name:'D 사례', images:['images/D-1.jpg','images/D-2.jpg','images/D-3.jpg'] },
-  { id:'E', name:'E 사례', images:['images/E-1.jpg','images/E-2.jpg','images/E-3.jpg','images/E-4.jpg'] },
+  { id:'A', name:'A 사례', images:['images/A'] },
+  { id:'B', name:'B 사례', images:['images/B'] },
+  { id:'C', name:'C 사례', images:['images/C'] },
+  { id:'D', name:'D 사례', images:['images/D'] },
+  { id:'E', name:'E 사례', images:['images/E'] },
 ];
+const IMG_EXTS = ['jpg','jpeg','png','webp','heic','JPG','PNG'];  // 자동 탐색 확장자
 const MAX_VOTES = 3;          // 1인당 최대 표수
 
 /* 관리자 비밀번호 — 반드시 본인만 아는 값으로 바꾸세요 */
@@ -436,18 +441,28 @@ let adminAuthed = false;
 const candWrap = document.getElementById("candidates");
 const phHTML = (label)=>`<div class="ph"><div class="pic">🖼️</div><div>${label}<br><span style="opacity:.7">이미지 준비 중</span></div></div>`;
 
+/* 확장자를 차례로 시도하며 이미지를 로드. 모두 실패하면 onFail() 호출 */
+function loadSmartImg(imgEl, base, {onOk, onFail}={}){
+  let i=0;
+  imgEl.onload = ()=>{ if(onOk) onOk(); };
+  imgEl.onerror = ()=>{
+    i++;
+    if(i<IMG_EXTS.length){ imgEl.src = `${base}.${IMG_EXTS[i]}`; }
+    else { imgEl.onerror=null; imgEl.style.display="none"; if(onFail) onFail(); }
+  };
+  imgEl.src = `${base}.${IMG_EXTS[0]}`;
+}
+
 function buildCards(){
   candWrap.innerHTML="";
   CANDIDATES.forEach(c=>{
     const card=document.createElement("div");
     card.className="card"; card.dataset.id=c.id;
     const gridClass=c.images.length===1?"one":(c.images.length%3===0?"three":"");
-    const thumbs=c.images.map((src,i)=>`
+    const thumbs=c.images.map((base,i)=>`
       <div class="thumb" data-cand="${c.id}" data-idx="${i}">
-        <div class="ph-host">${phHTML(c.id+'-'+(i+1))}</div>
-        <img src="${src}" alt="${c.name} 사진 ${i+1}"
-             onload="this.previousElementSibling.style.display='none'"
-             onerror="this.style.display='none'">
+        <div class="ph-host">${phHTML(c.id+(c.images.length>1?'-'+(i+1):''))}</div>
+        <img data-base="${base}" alt="${c.name} 사진 ${i+1}" style="display:none">
         <div class="zoomic">🔍</div>
       </div>`).join("");
     card.innerHTML=`
@@ -461,6 +476,14 @@ function buildCards(){
         <button class="vote-btn" data-vote="${c.id}"><span class="box">✓</span><span class="lbl">이 사례에 투표</span></button>
       </div>`;
     candWrap.appendChild(card);
+  });
+  // 썸네일 이미지 로드 (확장자 자동 탐색)
+  candWrap.querySelectorAll(".thumb img").forEach(img=>{
+    const host = img.parentElement.querySelector(".ph-host");
+    loadSmartImg(img, img.dataset.base, {
+      onOk: ()=>{ img.style.display=""; host.style.display="none"; },
+      onFail: ()=>{ host.style.display=""; }
+    });
   });
 }
 
@@ -628,12 +651,13 @@ const resetT=()=>{scale=1;tx=0;ty=0;applyT();};
 
 function loadLbImage(){
   const imgs=lbImages(); resetT();
-  const src=imgs[lbIdx]; lbImg.style.display="";
+  const base=imgs[lbIdx]; lbImg.style.display="";
   const old=lbWrap.querySelector(".lb-ph"); if(old) old.remove();
-  lbImg.src=src;
-  lbImg.onerror=()=>{ lbImg.style.display="none";
-    if(!lbWrap.querySelector(".lb-ph")){ const ph=document.createElement("div"); ph.className="lb-ph";
-      ph.innerHTML=`<div class="pic">🖼️</div><div>${lbCand}-${lbIdx+1} · 이미지 준비 중</div>`; lbWrap.appendChild(ph); } };
+  loadSmartImg(lbImg, base, {
+    onOk: ()=>{ lbImg.style.display=""; const p=lbWrap.querySelector(".lb-ph"); if(p) p.remove(); },
+    onFail: ()=>{ if(!lbWrap.querySelector(".lb-ph")){ const ph=document.createElement("div"); ph.className="lb-ph";
+      ph.innerHTML=`<div class="pic">🖼️</div><div>${lbCand}${imgs.length>1?'-'+(lbIdx+1):''} · 이미지 준비 중</div>`; lbWrap.appendChild(ph); } }
+  });
   lbCounter.textContent=`${lbCand} · ${lbIdx+1} / ${imgs.length}`;
   document.getElementById("lbPrev").disabled=lbIdx<=0;
   document.getElementById("lbNext").disabled=lbIdx>=imgs.length-1;
