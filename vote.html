@@ -43,14 +43,37 @@
   header .sub{margin-top:5px;font-size:13px;color:var(--muted);}
   header .sub b{color:var(--accent);font-weight:700;}
 
-  /* ---------- Mode banner ---------- */
-  #modeBanner{
+  /* ---------- Intro ---------- */
+  #intro{padding:14px 14px 0;}
+  .intro-card{
+    background:linear-gradient(160deg,#1e293b,#172033);
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 18px;
+  }
+  .intro-title{font-size:17px;font-weight:800;margin-bottom:10px;letter-spacing:-.2px;}
+  .intro-card p{font-size:13.5px;color:#cbd5e1;margin-bottom:10px;}
+  .intro-card b{color:#bae6fd;font-weight:700;}
+  .intro-prize{
+    display:inline-block;margin:2px 0 12px;padding:7px 14px;border-radius:20px;font-size:14px;font-weight:800;
+    background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.4);color:var(--gold);
+  }
+  .intro-prize b{color:#fde68a;}
+  .intro-guide{font-weight:600;color:#e2e8f0 !important;}
+  .intro-guide .dim{font-weight:400;color:var(--muted);font-size:12.5px;}
+  .intro-rules{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:7px;}
+  .intro-rules li{
+    position:relative;padding-left:20px;font-size:13px;color:#cbd5e1;line-height:1.5;
+  }
+  .intro-rules li::before{content:"✅";position:absolute;left:0;top:0;font-size:12px;}
+
+  /* ---------- Banners ---------- */
+  .banner{
     margin:12px 14px 0;padding:10px 12px;border-radius:12px;font-size:12.5px;
     display:flex;gap:8px;align-items:flex-start;line-height:1.45;
   }
-  #modeBanner.demo{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#fde68a;}
-  #modeBanner.live{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.4);color:#a7f3d0;}
-  #modeBanner .ic{font-size:14px;line-height:1.3;}
+  .banner.demo{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#fde68a;}
+  .banner.live{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.4);color:#a7f3d0;}
+  .banner.closed{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.45);color:#fecaca;font-size:14px;font-weight:600;}
+  .banner .ic{font-size:14px;line-height:1.3;}
 
   /* ---------- Candidates ---------- */
   main{padding:14px 14px 6px;display:flex;flex-direction:column;gap:16px;}
@@ -60,9 +83,7 @@
   }
   .card.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,189,248,.35);}
   .card.disabled{opacity:.55;}
-  .card-head{
-    display:flex;align-items:center;gap:12px;padding:14px 14px 12px;
-  }
+  .card-head{display:flex;align-items:center;gap:12px;padding:14px 14px 12px;}
   .badge{
     width:40px;height:40px;flex:0 0 40px;border-radius:12px;
     display:flex;align-items:center;justify-content:center;
@@ -73,11 +94,7 @@
   .card-head .name{font-weight:700;font-size:16px;}
   .card-head .cnt{font-size:12px;color:var(--muted);margin-top:1px;}
 
-  /* image grid */
-  .grid{
-    display:grid;gap:4px;padding:0 4px 4px;
-    grid-template-columns:repeat(2,1fr);
-  }
+  .grid{display:grid;gap:4px;padding:0 4px 4px;grid-template-columns:repeat(2,1fr);}
   .grid.one{grid-template-columns:1fr;}
   .grid.three{grid-template-columns:repeat(3,1fr);}
   .thumb{
@@ -98,7 +115,6 @@
     font-size:13px;color:#fff;pointer-events:none;
   }
 
-  /* vote toggle */
   .vote-row{padding:12px 14px 16px;}
   .vote-btn{
     width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);
@@ -130,17 +146,60 @@
   }
   #submitBtn:active{transform:scale(.98);}
   #submitBtn:disabled{opacity:.45;}
-  #resultsBtn{
-    flex:0 0 auto;padding:15px 16px;border-radius:14px;font-size:14px;font-weight:700;
-    background:var(--card2);color:var(--text);border:1px solid var(--line);
+
+  /* voter done note */
+  #doneNote{
+    margin:4px 14px 0;padding:16px;border-radius:14px;text-align:center;
+    background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:#a7f3d0;
+  }
+  #doneNote .big{font-size:18px;font-weight:800;margin-bottom:4px;}
+  #doneNote small{color:#86efac;}
+
+  /* admin entry */
+  #adminEntry{
+    display:block;margin:26px auto 30px;padding:8px 14px;font-size:12px;
+    color:#475569;background:none;border:1px solid #1e293b;border-radius:20px;
   }
 
-  /* ---------- Results ---------- */
-  #results{padding:6px 14px 20px;}
-  #results h2{font-size:17px;font-weight:800;margin:14px 2px 4px;}
-  #results .totals{font-size:13px;color:var(--muted);margin:0 2px 14px;}
+  /* ---------- Admin overlay ---------- */
+  #adminOverlay{
+    position:fixed;inset:0;z-index:120;background:rgba(2,6,23,.96);
+    overflow-y:auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+  #adminOverlay[hidden]{display:none;}
+  .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .admin-top h2{font-size:18px;font-weight:800;}
+  .admin-x{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:18px;}
+  .admin-box{
+    max-width:560px;margin:0 auto;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:18px;
+  }
+  .admin-box label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;}
+  .admin-box input{
+    width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);
+    background:#0f172a;color:var(--text);font-size:16px;margin-bottom:12px;
+  }
+  .pill-btn{
+    width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06283d;
+  }
+  .pill-btn.danger{background:linear-gradient(135deg,#f87171,#ef4444);color:#fff;}
+  .pill-btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line);}
+  .admin-err{color:var(--danger);font-size:13px;margin-top:6px;min-height:18px;}
+
+  .stat-row{display:flex;gap:10px;margin-bottom:16px;}
+  .stat{flex:1;background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+  .stat .v{font-size:22px;font-weight:800;}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px;}
+  .stat.open .v{color:var(--ok);} .stat.shut .v{color:var(--danger);}
+
+  .locked-note{
+    background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:#fde68a;
+    border-radius:12px;padding:14px;text-align:center;font-size:14px;line-height:1.5;margin:6px 0 4px;
+  }
+  #adminResults h3{font-size:16px;font-weight:800;margin:18px 2px 10px;}
   .res-row{
-    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    background:#0f172a;border:1px solid var(--line);border-radius:14px;
     padding:12px 14px;margin-bottom:10px;position:relative;overflow:hidden;
   }
   .res-row.win{border-color:var(--gold);box-shadow:0 0 0 2px rgba(251,191,36,.3);}
@@ -161,46 +220,26 @@
   .res-name .crown{margin-left:6px;}
   .res-val{font-weight:800;font-size:16px;}
   .res-val small{font-weight:500;color:var(--muted);font-size:12px;margin-left:3px;}
-  #votedNote{
-    margin:0 2px 10px;padding:10px 12px;border-radius:12px;font-size:13px;
-    background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35);color:#a7f3d0;
-  }
+  .winner-line{margin:2px 2px 14px;font-size:14px;color:var(--gold);font-weight:700;}
 
   /* ---------- Lightbox ---------- */
-  #lightbox{
-    position:fixed;inset:0;z-index:100;background:rgba(2,6,23,.97);
-    display:flex;flex-direction:column;touch-action:none;
-  }
+  #lightbox{position:fixed;inset:0;z-index:100;background:rgba(2,6,23,.97);display:flex;flex-direction:column;touch-action:none;}
   #lightbox[hidden]{display:none;}
-  .lb-top{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;color:#fff;
-  }
+  .lb-top{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;color:#fff;}
   .lb-counter{font-size:14px;font-weight:600;color:#cbd5e1;}
-  .lb-close{
-    width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.12);
-    color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;
-  }
-  .lb-stage{
-    flex:1;position:relative;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-  }
+  .lb-close{width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;}
+  .lb-stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
   .lb-img-wrap{will-change:transform;}
   #lbImg{max-width:100vw;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;pointer-events:none;}
   .lb-ph{color:#64748b;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:14px;}
   .lb-ph .pic{font-size:54px;opacity:.6;}
-  .lb-nav{
-    position:absolute;top:50%;transform:translateY(-50%);
-    width:46px;height:46px;border-radius:50%;border:none;
-    background:rgba(255,255,255,.12);color:#fff;font-size:24px;
-    display:flex;align-items:center;justify-content:center;z-index:5;
-  }
+  .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;z-index:5;}
   .lb-nav.prev{left:10px;} .lb-nav.next{right:10px;}
   .lb-nav:disabled{opacity:0;pointer-events:none;}
   .lb-hint{text-align:center;color:#64748b;font-size:12px;padding:8px 16px calc(env(safe-area-inset-bottom) + 14px);}
 
   @media (min-width:560px){
-    main,#results{max-width:600px;margin-left:auto;margin-right:auto;}
+    main,#intro{max-width:600px;margin-left:auto;margin-right:auto;}
     #bar{max-width:600px;left:50%;transform:translateX(-50%);}
   }
 </style>
@@ -208,25 +247,76 @@
 <body>
 
 <header>
-  <h1>🗳️ 가장 공감가는 사례 투표</h1>
-  <div class="sub">최대 <b>3명</b>까지 선택 · 후보당 1표 · 기기당 1회 · 최다 득표 1명 선정</div>
+  <h1>🤖 GI AI 릴레이 캠페인 1탄</h1>
+  <div class="sub">🗳️ 투표 <b>6월 18일 자정</b>까지 · 최대 <b>3표</b> · 결과는 마감 후 관리자만 확인</div>
 </header>
 
-<div id="modeBanner" class="demo"><span class="ic">⚠️</span><span id="modeText">데모 모드입니다. (이 기기에서만 집계) — 코드 상단의 Firebase 설정을 입력하면 팀원과 실시간으로 공유됩니다.</span></div>
+<section id="intro">
+  <div class="intro-card">
+    <div class="intro-title">1탄! 😵 망한 AI 사용기 컨테스트</div>
+    <p>AI tool(<b>ASA, Talksiri, Copilot</b>)을 사용하면서 경험한 황당하고 재밌는 <b>실패 사례</b>를 공유합니다.
+       AI tool 사용 활성화는 물론, 완벽하지 않은 부분을 발견·수집해 향후 개발 요청에 반영하기 위함입니다.</p>
+    <div class="intro-prize">🏆 1등 <b>SPARK</b> 수여</div>
+    <p class="intro-guide">다음 중 <b>가장 웃기거나 공감되는 사례</b>에 모두 투표해 주세요.<br>
+       <span class="dim">(사진은 확대 혹은 다운로드해서 보면 보다 잘 보입니다.)</span></p>
+    <ul class="intro-rules">
+      <li>A·B·C·D·E <b>각 항목의 투표 수 총합</b>으로 집계하여 <b>최다 득표자</b>에게 수상합니다.</li>
+      <li>총 <b>최소 0표 ~ 최대 3표</b> 투표해 주세요. (한 사례당 1표, 기기당 1회)</li>
+    </ul>
+  </div>
+</section>
+
+<div id="modeBanner" class="banner demo"><span class="ic">⚠️</span><span id="modeText">데모 모드입니다. (이 기기에서만 집계) — 코드 상단의 Firebase 설정을 입력하면 팀원과 실시간으로 합산됩니다.</span></div>
+<div id="closedBanner" class="banner closed" hidden><span class="ic">🔒</span><span>투표가 마감되었습니다. 참여해 주셔서 감사합니다.</span></div>
+
+<div id="doneNote" hidden>
+  <div class="big">✅ 투표가 완료되었습니다</div>
+  <small>소중한 한 표 감사합니다. 결과는 마감 후 공개됩니다.</small>
+</div>
 
 <main id="candidates"></main>
 
-<section id="results" hidden>
-  <div id="votedNote" hidden>✅ 투표가 완료되었습니다. 이 기기에서는 재투표할 수 없습니다.</div>
-  <h2>📊 실시간 결과</h2>
-  <div class="totals" id="totals"></div>
-  <div id="resList"></div>
-</section>
+<button id="adminEntry">🔒 관리자 결과 보기</button>
 
 <div id="bar">
   <div id="selInfo">선택 <b id="selCount">0</b>/3</div>
-  <button id="resultsBtn">결과</button>
   <button id="submitBtn" disabled>투표하기</button>
+</div>
+
+<!-- Admin overlay -->
+<div id="adminOverlay" hidden>
+  <div class="admin-top">
+    <h2>🔐 관리자</h2>
+    <button class="admin-x" id="adminClose">✕</button>
+  </div>
+
+  <!-- login -->
+  <div class="admin-box" id="adminLogin">
+    <label>관리자 비밀번호</label>
+    <input type="password" id="adminPw" placeholder="비밀번호 입력" autocomplete="off" />
+    <button class="pill-btn" id="adminLoginBtn">입장</button>
+    <div class="admin-err" id="adminErr"></div>
+  </div>
+
+  <!-- panel -->
+  <div class="admin-box" id="adminPanel" hidden>
+    <div class="stat-row">
+      <div class="stat" id="statState"><div class="v">—</div><div class="l">투표 상태</div></div>
+      <div class="stat"><div class="v" id="statVoters">0</div><div class="l">참여 인원</div></div>
+    </div>
+
+    <button class="pill-btn danger" id="closeVoteBtn" hidden>🔒 투표 마감하기</button>
+    <button class="pill-btn ghost" id="reopenVoteBtn" hidden>🔓 마감 해제 (다시 열기)</button>
+
+    <div id="adminResults">
+      <div class="locked-note" id="lockedNote">투표가 진행 중입니다.<br>결과는 <b>마감</b> 후 공개됩니다.</div>
+      <div id="resWrap" hidden>
+        <h3>📊 최종 결과</h3>
+        <div class="winner-line" id="winnerLine"></div>
+        <div id="resList"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Lightbox -->
@@ -237,9 +327,7 @@
   </div>
   <div class="lb-stage" id="lbStage">
     <button class="lb-nav prev" id="lbPrev" aria-label="이전">‹</button>
-    <div class="lb-img-wrap" id="lbWrap">
-      <img id="lbImg" alt="" />
-    </div>
+    <div class="lb-img-wrap" id="lbWrap"><img id="lbImg" alt="" /></div>
     <button class="lb-nav next" id="lbNext" aria-label="다음">›</button>
   </div>
   <div class="lb-hint">두 손가락으로 확대 · 더블탭 확대/축소 · 좌우로 넘기기</div>
@@ -258,57 +346,59 @@ const CANDIDATES = [
   { id:'D', name:'D 사례', images:['images/D-1.jpg','images/D-2.jpg','images/D-3.jpg'] },
   { id:'E', name:'E 사례', images:['images/E-1.jpg','images/E-2.jpg','images/E-3.jpg','images/E-4.jpg'] },
 ];
-const MAX_VOTES = 3; // 1인당 최대 표수
+const MAX_VOTES = 3;          // 1인당 최대 표수
+
+/* 관리자 비밀번호 — 반드시 본인만 아는 값으로 바꾸세요 */
+const ADMIN_PASSWORD = "hansol2026";
 
 /* ============================================================
    2) 공유 백엔드 (Firebase) 설정
-   - Firebase 콘솔 > 프로젝트 설정 > 웹앱 config를 아래에 붙여넣고,
-     Realtime Database를 만든 뒤 databaseURL을 채우세요.
    - 비워두면 자동으로 "데모 모드"(이 기기 localStorage)로 동작합니다.
    ============================================================ */
 const FIREBASE_CONFIG = {
   apiKey: "",
   authDomain: "",
-  databaseURL: "",          // 예: https://your-project-default-rtdb.firebaseio.com
+  databaseURL: "",
   projectId: "",
   storageBucket: "",
   messagingSenderId: "",
   appId: "",
 };
-const VOTE_PATH = "ballots"; // RTDB 경로
+const BALLOT_PATH = "ballots";
+const META_PATH = "meta";
 
 /* ============================================================
    3) 저장소 추상화 (Firebase 또는 localStorage 데모)
    ============================================================ */
 function makeDemoStore(){
-  const KEY = "vote_ballots_demo";
-  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
-  let listeners = [];
-  window.addEventListener("storage", e => { if(e.key===KEY) listeners.forEach(f=>f(read())); });
+  const BKEY="vote_ballots_demo", MKEY="vote_meta_demo";
+  const readB=()=>{try{return JSON.parse(localStorage.getItem(BKEY))||{};}catch{return {};}};
+  const readM=()=>{try{return JSON.parse(localStorage.getItem(MKEY))||{closed:false};}catch{return {closed:false};}};
+  let bL=[], mL=[];
+  window.addEventListener("storage", e=>{
+    if(e.key===BKEY) bL.forEach(f=>f(readB()));
+    if(e.key===MKEY) mL.forEach(f=>f(readM()));
+  });
   return {
     mode:"demo",
-    onBallots(cb){ listeners.push(cb); cb(read()); },
-    async submit(voterId, ballot){
-      const all = read(); all[voterId] = ballot;
-      localStorage.setItem(KEY, JSON.stringify(all));
-      listeners.forEach(f=>f(all));
-    }
+    onBallots(cb){ bL.push(cb); cb(readB()); },
+    onMeta(cb){ mL.push(cb); cb(readM()); },
+    async submit(id,ballot){ const a=readB(); a[id]=ballot; localStorage.setItem(BKEY,JSON.stringify(a)); bL.forEach(f=>f(a)); },
+    async setMeta(m){ const cur=readM(); const n={...cur,...m}; localStorage.setItem(MKEY,JSON.stringify(n)); mL.forEach(f=>f(n)); }
   };
 }
 
 async function makeFirebaseStore(){
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
-  const { getDatabase, ref, onValue, set } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+  const { getDatabase, ref, onValue, set, update } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
   const app = initializeApp(FIREBASE_CONFIG);
   const db = getDatabase(app);
   return {
     mode:"live",
-    onBallots(cb){
-      onValue(ref(db, VOTE_PATH), snap => cb(snap.val() || {}));
-    },
-    async submit(voterId, ballot){
-      await set(ref(db, `${VOTE_PATH}/${voterId}`), ballot);
-    }
+    onBallots(cb){ onValue(ref(db,BALLOT_PATH), s=>cb(s.val()||{})); },
+    onMeta(cb){ onValue(ref(db,META_PATH), s=>cb(s.val()||{closed:false})); },
+    async submit(id,ballot){ await set(ref(db,`${BALLOT_PATH}/${id}`), ballot); },
+    async setMeta(m){ await update(ref(db,META_PATH), m); }
   };
 }
 
@@ -317,15 +407,13 @@ async function initStore(){
   if(FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.apiKey){
     try{
       store = await makeFirebaseStore();
-      const b = document.getElementById("modeBanner");
-      b.className = "live";
-      b.querySelector(".ic").textContent = "🟢";
-      document.getElementById("modeText").textContent = "실시간 공유 모드 — 팀원들의 투표가 함께 집계됩니다.";
+      const b=document.getElementById("modeBanner"); b.className="banner live";
+      b.querySelector(".ic").textContent="🟢";
+      document.getElementById("modeText").textContent="실시간 공유 모드 — 팀원들의 투표가 함께 합산됩니다.";
       return;
     }catch(err){
       console.error("Firebase 연결 실패, 데모 모드로 전환:", err);
-      document.getElementById("modeText").textContent =
-        "Firebase 연결에 실패해 데모 모드로 동작합니다. (설정/네트워크를 확인하세요)";
+      document.getElementById("modeText").textContent="Firebase 연결에 실패해 데모 모드로 동작합니다. (설정/네트워크 확인)";
     }
   }
   store = makeDemoStore();
@@ -334,84 +422,77 @@ async function initStore(){
 /* ============================================================
    4) 상태
    ============================================================ */
-const voterId = (()=>{
-  let v = localStorage.getItem("voterId");
-  if(!v){ v = (crypto.randomUUID ? crypto.randomUUID() : "id-"+Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem("voterId", v); }
-  return v;
-})();
-const hasVoted = () => localStorage.getItem("voted") === "1";
+const voterId = (()=>{ let v=localStorage.getItem("voterId");
+  if(!v){ v=(crypto.randomUUID?crypto.randomUUID():"id-"+Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem("voterId",v);} return v; })();
+const hasVoted = () => localStorage.getItem("voted")==="1";
 const selected = new Set();
 let latestBallots = {};
+let isClosed = false;
+let adminAuthed = false;
 
 /* ============================================================
-   5) 렌더링: 후보 카드
+   5) 후보 카드 렌더
    ============================================================ */
 const candWrap = document.getElementById("candidates");
-
-function placeholderHTML(label){
-  return `<div class="ph"><div class="pic">🖼️</div><div>${label}<br><span style="opacity:.7">이미지 준비 중</span></div></div>`;
-}
+const phHTML = (label)=>`<div class="ph"><div class="pic">🖼️</div><div>${label}<br><span style="opacity:.7">이미지 준비 중</span></div></div>`;
 
 function buildCards(){
-  candWrap.innerHTML = "";
+  candWrap.innerHTML="";
   CANDIDATES.forEach(c=>{
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.id = c.id;
-
-    const gridClass = c.images.length===1 ? "one" : (c.images.length%3===0 ? "three":"");
-    const thumbs = c.images.map((src,i)=>`
+    const card=document.createElement("div");
+    card.className="card"; card.dataset.id=c.id;
+    const gridClass=c.images.length===1?"one":(c.images.length%3===0?"three":"");
+    const thumbs=c.images.map((src,i)=>`
       <div class="thumb" data-cand="${c.id}" data-idx="${i}">
-        <div class="ph-host">${placeholderHTML(c.id+'-'+(i+1))}</div>
+        <div class="ph-host">${phHTML(c.id+'-'+(i+1))}</div>
         <img src="${src}" alt="${c.name} 사진 ${i+1}"
              onload="this.previousElementSibling.style.display='none'"
              onerror="this.style.display='none'">
         <div class="zoomic">🔍</div>
       </div>`).join("");
-
-    card.innerHTML = `
+    card.innerHTML=`
       <div class="card-head">
         <div class="badge">${c.id}</div>
-        <div class="meta">
-          <div class="name">${c.name}</div>
-          <div class="cnt">사진 ${c.images.length}장 · 탭하면 확대</div>
-        </div>
+        <div class="meta"><div class="name">${c.name}</div>
+          <div class="cnt">사진 ${c.images.length}장 · 탭하면 확대</div></div>
       </div>
       <div class="grid ${gridClass}">${thumbs}</div>
       <div class="vote-row">
-        <button class="vote-btn" data-vote="${c.id}">
-          <span class="box">✓</span><span class="lbl">이 사례에 투표</span>
-        </button>
+        <button class="vote-btn" data-vote="${c.id}"><span class="box">✓</span><span class="lbl">이 사례에 투표</span></button>
       </div>`;
     candWrap.appendChild(card);
   });
 }
 
 /* ============================================================
-   6) 투표 선택 로직
+   6) 투표 선택 / 잠금 UI
    ============================================================ */
+function votingLocked(){ return hasVoted() || isClosed; }
+
 function updateSelUI(){
-  document.getElementById("selCount").textContent = selected.size;
+  document.getElementById("selCount").textContent=selected.size;
   CANDIDATES.forEach(c=>{
-    const card = candWrap.querySelector(`.card[data-id="${c.id}"]`);
-    const isSel = selected.has(c.id);
-    card.classList.toggle("selected", isSel);
-    const atMax = selected.size>=MAX_VOTES && !isSel;
-    card.classList.toggle("disabled", atMax);
-    const btn = card.querySelector(".vote-btn");
-    btn.disabled = atMax || hasVoted();
-    btn.querySelector(".lbl").textContent = isSel ? "선택됨 (취소하려면 탭)" : (atMax ? "최대 3명까지" : "이 사례에 투표");
+    const card=candWrap.querySelector(`.card[data-id="${c.id}"]`);
+    const isSel=selected.has(c.id);
+    card.classList.toggle("selected",isSel);
+    const atMax=selected.size>=MAX_VOTES && !isSel;
+    card.classList.toggle("disabled", atMax || votingLocked());
+    const btn=card.querySelector(".vote-btn");
+    btn.disabled=atMax || votingLocked();
+    btn.querySelector(".lbl").textContent = isSel?"선택됨 (취소하려면 탭)":(atMax?"최대 3명까지":"이 사례에 투표");
   });
-  const sub = document.getElementById("submitBtn");
-  sub.disabled = hasVoted() || selected.size===0;
+  const sub=document.getElementById("submitBtn");
+  if(isClosed){ sub.disabled=true; sub.textContent="투표 마감됨"; }
+  else if(hasVoted()){ sub.disabled=true; sub.textContent="투표 완료 ✓"; }
+  else { sub.disabled=selected.size===0; sub.textContent="투표하기"; }
 }
 
 candWrap.addEventListener("click", e=>{
-  const thumb = e.target.closest(".thumb");
-  if(thumb){ openLightbox(thumb.dataset.cand, +thumb.dataset.idx); return; }
-  const vbtn = e.target.closest(".vote-btn");
+  const thumb=e.target.closest(".thumb");
+  if(thumb){ openLightbox(thumb.dataset.cand,+thumb.dataset.idx); return; }
+  const vbtn=e.target.closest(".vote-btn");
   if(vbtn && !vbtn.disabled){
-    const id = vbtn.dataset.vote;
+    const id=vbtn.dataset.vote;
     if(selected.has(id)) selected.delete(id);
     else if(selected.size<MAX_VOTES) selected.add(id);
     updateSelUI();
@@ -422,214 +503,192 @@ candWrap.addEventListener("click", e=>{
    7) 제출
    ============================================================ */
 document.getElementById("submitBtn").addEventListener("click", async ()=>{
-  if(hasVoted() || selected.size===0) return;
+  if(votingLocked() || selected.size===0) return;
   if(!confirm(`선택하신 ${selected.size}곳에 투표합니다. 제출 후에는 이 기기에서 변경할 수 없습니다. 계속할까요?`)) return;
-  const ballot = {};
-  selected.forEach(id=> ballot[id]=true);
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true; btn.textContent = "제출 중…";
+  const ballot={}; selected.forEach(id=>ballot[id]=true);
+  const btn=document.getElementById("submitBtn");
+  btn.disabled=true; btn.textContent="제출 중…";
   try{
-    await store.submit(voterId, ballot);
+    await store.submit(voterId,ballot);
     localStorage.setItem("voted","1");
-    btn.textContent = "투표 완료 ✓";
-    showResults(true);
+    showDone();
   }catch(err){
     console.error(err);
     alert("제출에 실패했습니다. 네트워크를 확인하고 다시 시도해 주세요.");
-    btn.disabled=false; btn.textContent="투표하기";
+    updateSelUI();
   }
 });
 
-document.getElementById("resultsBtn").addEventListener("click", ()=> showResults());
-
-/* ============================================================
-   8) 결과 집계 & 렌더
-   ============================================================ */
-function tally(ballots){
-  const counts = {}; CANDIDATES.forEach(c=> counts[c.id]=0);
-  let voters = 0;
-  Object.values(ballots||{}).forEach(b=>{
-    if(!b) return; voters++;
-    Object.keys(b).forEach(id=>{ if(b[id] && counts[id]!=null) counts[id]++; });
-  });
-  return { counts, voters };
+function showDone(){
+  selected.clear();
+  document.getElementById("doneNote").hidden=false;
+  document.getElementById("doneNote").scrollIntoView({behavior:"smooth",block:"center"});
+  updateSelUI();
 }
 
-function renderResults(){
-  const { counts, voters } = tally(latestBallots);
-  const max = Math.max(0, ...CANDIDATES.map(c=>counts[c.id]));
-  document.getElementById("totals").textContent =
-    `투표자 ${voters}명 · 총 ${Object.values(counts).reduce((a,b)=>a+b,0)}표` +
-    (store?.mode==="demo" ? "  (데모: 이 기기 기준)" : "");
+/* ============================================================
+   8) 마감 상태 반영
+   ============================================================ */
+function applyClosed(){
+  document.getElementById("closedBanner").hidden = !isClosed;
+  if(isClosed){ document.getElementById("doneNote").hidden=true; }
+  else if(hasVoted()){ document.getElementById("doneNote").hidden=false; }
+  updateSelUI();
+  if(adminAuthed) renderAdmin();
+}
 
-  // 정렬: 득표 내림차순, 동률은 알파벳
-  const ordered = [...CANDIDATES].sort((a,b)=> counts[b.id]-counts[a.id] || a.id.localeCompare(b.id));
-  const winners = max>0 ? CANDIDATES.filter(c=>counts[c.id]===max).map(c=>c.id) : [];
+/* ============================================================
+   9) 결과 집계 (관리자 전용)
+   ============================================================ */
+function tally(ballots){
+  const counts={}; CANDIDATES.forEach(c=>counts[c.id]=0);
+  let voters=0;
+  Object.values(ballots||{}).forEach(b=>{ if(!b)return; voters++;
+    Object.keys(b).forEach(id=>{ if(b[id]&&counts[id]!=null) counts[id]++; }); });
+  return {counts,voters};
+}
 
-  document.getElementById("resList").innerHTML = ordered.map(c=>{
-    const v = counts[c.id];
-    const pct = max>0 ? Math.round(v/max*100) : 0;
-    const isWin = winners.length===1 && winners[0]===c.id;
-    return `
-      <div class="res-row ${isWin?'win':''}">
-        <div class="res-fill" style="width:${pct}%"></div>
-        <div class="res-inner">
-          <div class="res-badge">${c.id}</div>
-          <div class="res-name">${c.name}${isWin?'<span class="crown">👑</span>':''}</div>
-          <div class="res-val">${v}<small>표</small></div>
-        </div>
-      </div>`;
+function renderAdmin(){
+  const {counts,voters}=tally(latestBallots);
+  document.getElementById("statVoters").textContent=voters;
+  const ss=document.getElementById("statState");
+  ss.className="stat "+(isClosed?"shut":"open");
+  ss.querySelector(".v").textContent=isClosed?"마감됨":"진행중";
+
+  document.getElementById("closeVoteBtn").hidden=isClosed;
+  document.getElementById("reopenVoteBtn").hidden=!isClosed;
+
+  // 결과는 '마감' 후에만 공개
+  document.getElementById("lockedNote").hidden=isClosed;
+  document.getElementById("resWrap").hidden=!isClosed;
+  if(!isClosed) return;
+
+  const max=Math.max(0,...CANDIDATES.map(c=>counts[c.id]));
+  const ordered=[...CANDIDATES].sort((a,b)=>counts[b.id]-counts[a.id]||a.id.localeCompare(b.id));
+  const winners=max>0?CANDIDATES.filter(c=>counts[c.id]===max):[];
+  const wl=document.getElementById("winnerLine");
+  wl.textContent = max===0 ? "아직 표가 없습니다."
+    : winners.length===1 ? `🏆 최다 득표: ${winners[0].name} (${max}표)`
+    : `🤝 공동 1위: ${winners.map(w=>w.name).join(", ")} (각 ${max}표)`;
+
+  document.getElementById("resList").innerHTML=ordered.map(c=>{
+    const v=counts[c.id], pct=max>0?Math.round(v/max*100):0;
+    const isWin=winners.length===1&&winners[0]===c;
+    return `<div class="res-row ${isWin?'win':''}">
+      <div class="res-fill" style="width:${pct}%"></div>
+      <div class="res-inner"><div class="res-badge">${c.id}</div>
+        <div class="res-name">${c.name}${isWin?'<span class="crown">👑</span>':''}</div>
+        <div class="res-val">${v}<small>표</small></div></div></div>`;
   }).join("");
 }
 
-function showResults(justVoted){
-  const sec = document.getElementById("results");
-  sec.hidden = false;
-  document.getElementById("votedNote").hidden = !(justVoted || hasVoted());
-  renderResults();
-  sec.scrollIntoView({behavior:"smooth", block:"start"});
+/* ============================================================
+   10) 관리자 패널 (비밀번호 보호)
+   ============================================================ */
+const adminOverlay=document.getElementById("adminOverlay");
+function openAdmin(){ adminOverlay.hidden=false; document.body.style.overflow="hidden";
+  if(!adminAuthed){ document.getElementById("adminPw").value=""; document.getElementById("adminErr").textContent=""; setTimeout(()=>document.getElementById("adminPw").focus(),100); } }
+function closeAdmin(){ adminOverlay.hidden=true; document.body.style.overflow=""; }
+
+document.getElementById("adminEntry").addEventListener("click", openAdmin);
+document.getElementById("adminClose").addEventListener("click", closeAdmin);
+
+function tryLogin(){
+  const pw=document.getElementById("adminPw").value;
+  if(pw===ADMIN_PASSWORD){
+    adminAuthed=true;
+    document.getElementById("adminLogin").hidden=true;
+    document.getElementById("adminPanel").hidden=false;
+    renderAdmin();
+  }else{
+    document.getElementById("adminErr").textContent="비밀번호가 올바르지 않습니다.";
+  }
 }
+document.getElementById("adminLoginBtn").addEventListener("click", tryLogin);
+document.getElementById("adminPw").addEventListener("keydown", e=>{ if(e.key==="Enter") tryLogin(); });
+
+document.getElementById("closeVoteBtn").addEventListener("click", async ()=>{
+  if(!confirm("투표를 마감하시겠습니까? 마감하면 더 이상 투표할 수 없고 결과가 공개됩니다.")) return;
+  await store.setMeta({closed:true});
+});
+document.getElementById("reopenVoteBtn").addEventListener("click", async ()=>{
+  if(!confirm("마감을 해제하고 다시 투표를 열까요?")) return;
+  await store.setMeta({closed:false});
+});
 
 /* ============================================================
-   9) 라이트박스 (확대/핀치줌/팬/스와이프)
+   11) 라이트박스 (확대/핀치줌/팬/스와이프)
    ============================================================ */
-const lb = document.getElementById("lightbox");
-const lbImg = document.getElementById("lbImg");
-const lbWrap = document.getElementById("lbWrap");
-const lbCounter = document.getElementById("lbCounter");
-let lbCand=null, lbIdx=0;
-let scale=1, tx=0, ty=0;
-
-function lbImages(){ return (CANDIDATES.find(c=>c.id===lbCand)||{}).images || []; }
-function applyTransform(){ lbWrap.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; }
-function resetTransform(){ scale=1; tx=0; ty=0; applyTransform(); }
+const lb=document.getElementById("lightbox"), lbImg=document.getElementById("lbImg"),
+      lbWrap=document.getElementById("lbWrap"), lbCounter=document.getElementById("lbCounter");
+let lbCand=null, lbIdx=0, scale=1, tx=0, ty=0;
+const lbImages=()=>(CANDIDATES.find(c=>c.id===lbCand)||{}).images||[];
+const applyT=()=>lbWrap.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+const resetT=()=>{scale=1;tx=0;ty=0;applyT();};
 
 function loadLbImage(){
-  const imgs = lbImages();
-  resetTransform();
-  const src = imgs[lbIdx];
-  lbImg.style.display="";
-  // 이전 placeholder 제거
-  const old = lbWrap.querySelector(".lb-ph"); if(old) old.remove();
-  lbImg.src = src;
-  lbImg.onerror = ()=>{
-    lbImg.style.display="none";
-    if(!lbWrap.querySelector(".lb-ph")){
-      const ph=document.createElement("div");
-      ph.className="lb-ph";
-      ph.innerHTML=`<div class="pic">🖼️</div><div>${lbCand}-${lbIdx+1} · 이미지 준비 중</div>`;
-      lbWrap.appendChild(ph);
-    }
-  };
-  lbCounter.textContent = `${lbCand} · ${lbIdx+1} / ${imgs.length}`;
-  document.getElementById("lbPrev").disabled = lbIdx<=0;
-  document.getElementById("lbNext").disabled = lbIdx>=imgs.length-1;
+  const imgs=lbImages(); resetT();
+  const src=imgs[lbIdx]; lbImg.style.display="";
+  const old=lbWrap.querySelector(".lb-ph"); if(old) old.remove();
+  lbImg.src=src;
+  lbImg.onerror=()=>{ lbImg.style.display="none";
+    if(!lbWrap.querySelector(".lb-ph")){ const ph=document.createElement("div"); ph.className="lb-ph";
+      ph.innerHTML=`<div class="pic">🖼️</div><div>${lbCand}-${lbIdx+1} · 이미지 준비 중</div>`; lbWrap.appendChild(ph); } };
+  lbCounter.textContent=`${lbCand} · ${lbIdx+1} / ${imgs.length}`;
+  document.getElementById("lbPrev").disabled=lbIdx<=0;
+  document.getElementById("lbNext").disabled=lbIdx>=imgs.length-1;
 }
-
-function openLightbox(candId, idx){
-  lbCand=candId; lbIdx=idx;
-  lb.hidden=false;
-  document.body.style.overflow="hidden";
-  loadLbImage();
-}
-function closeLightbox(){ lb.hidden=true; document.body.style.overflow=""; }
-function nav(d){
-  const imgs=lbImages();
-  const n=lbIdx+d;
-  if(n<0||n>=imgs.length) return;
-  lbIdx=n; loadLbImage();
-}
-
+function openLightbox(id,idx){ lbCand=id; lbIdx=idx; lb.hidden=false; document.body.style.overflow="hidden"; loadLbImage(); }
+function closeLightbox(){ lb.hidden=true; if(adminOverlay.hidden) document.body.style.overflow=""; }
+function nav(d){ const imgs=lbImages(); const n=lbIdx+d; if(n<0||n>=imgs.length) return; lbIdx=n; loadLbImage(); }
 document.getElementById("lbClose").addEventListener("click", closeLightbox);
 document.getElementById("lbPrev").addEventListener("click", ()=>nav(-1));
 document.getElementById("lbNext").addEventListener("click", ()=>nav(1));
 
-/* 제스처: 핀치줌 + 팬 + 더블탭 + 스와이프 */
-const stage = document.getElementById("lbStage");
-let pointers=new Map();
-let startDist=0, startScale=1, startTx=0, startTy=0, startMid={x:0,y:0};
-let panStart=null, swipeStart=null, lastTap=0;
-
+const stage=document.getElementById("lbStage");
+let pointers=new Map(), startDist=0, startScale=1, startTx=0, startTy=0, startMid={x:0,y:0}, panStart=null, swipeStart=null, lastTap=0;
 stage.addEventListener("pointerdown", e=>{
   if(e.target.closest(".lb-nav")) return;
   stage.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2){
-    const p=[...pointers.values()];
-    startDist=Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
-    startScale=scale;
-    startMid={x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};
-    startTx=tx; startTy=ty;
-    panStart=null; swipeStart=null;
-  }else if(pointers.size===1){
-    if(scale>1){ panStart={x:e.clientX-tx,y:e.clientY-ty}; }
-    else { swipeStart={x:e.clientX,y:e.clientY,t:Date.now()}; }
-  }
+  if(pointers.size===2){ const p=[...pointers.values()];
+    startDist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); startScale=scale;
+    startMid={x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2}; startTx=tx; startTy=ty; panStart=null; swipeStart=null;
+  }else if(pointers.size===1){ if(scale>1) panStart={x:e.clientX-tx,y:e.clientY-ty}; else swipeStart={x:e.clientX,y:e.clientY,t:Date.now()}; }
 });
-
 stage.addEventListener("pointermove", e=>{
   if(!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===2){
-    const p=[...pointers.values()];
-    const dist=Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
-    scale=Math.min(5, Math.max(1, startScale * dist/startDist));
-    tx=startTx + ((p[0].x+p[1].x)/2 - startMid.x);
-    ty=startTy + ((p[0].y+p[1].y)/2 - startMid.y);
-    applyTransform();
-  }else if(pointers.size===1 && panStart && scale>1){
-    tx=e.clientX-panStart.x; ty=e.clientY-panStart.y; applyTransform();
-  }else if(pointers.size===1 && swipeStart && scale<=1){
-    tx=e.clientX-swipeStart.x; applyTransform();
-  }
+  if(pointers.size===2){ const p=[...pointers.values()];
+    const dist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    scale=Math.min(5,Math.max(1,startScale*dist/startDist));
+    tx=startTx+((p[0].x+p[1].x)/2-startMid.x); ty=startTy+((p[0].y+p[1].y)/2-startMid.y); applyT();
+  }else if(pointers.size===1&&panStart&&scale>1){ tx=e.clientX-panStart.x; ty=e.clientY-panStart.y; applyT(); }
+  else if(pointers.size===1&&swipeStart&&scale<=1){ tx=e.clientX-swipeStart.x; applyT(); }
 });
-
 function endPointer(e){
-  if(swipeStart && scale<=1 && pointers.size===1){
-    const dx=e.clientX-swipeStart.x, dt=Date.now()-swipeStart.t;
-    if(Math.abs(dx)>60 || (Math.abs(dx)>30 && dt<250)){
-      tx=0; applyTransform();
-      nav(dx<0?1:-1);
-    }else{ tx=0; applyTransform(); }
-  }
+  if(swipeStart&&scale<=1&&pointers.size===1){ const dx=e.clientX-swipeStart.x, dt=Date.now()-swipeStart.t;
+    if(Math.abs(dx)>60||(Math.abs(dx)>30&&dt<250)){ tx=0; applyT(); nav(dx<0?1:-1); } else { tx=0; applyT(); } }
   pointers.delete(e.pointerId);
-  if(pointers.size<2){ startDist=0; }
-  if(pointers.size===0){ panStart=null; swipeStart=null; if(scale<1.02) resetTransform(); }
+  if(pointers.size<2) startDist=0;
+  if(pointers.size===0){ panStart=null; swipeStart=null; if(scale<1.02) resetT(); }
 }
 stage.addEventListener("pointerup", endPointer);
 stage.addEventListener("pointercancel", endPointer);
-
-stage.addEventListener("click", e=>{
-  if(e.target.closest(".lb-nav")) return;
-  const now=Date.now();
-  if(now-lastTap<300){
-    if(scale>1) resetTransform();
-    else { scale=2.5; applyTransform(); }
-  }
-  lastTap=now;
-});
-
-document.addEventListener("keydown", e=>{
-  if(lb.hidden) return;
-  if(e.key==="Escape") closeLightbox();
-  else if(e.key==="ArrowLeft") nav(-1);
-  else if(e.key==="ArrowRight") nav(1);
-});
+stage.addEventListener("click", e=>{ if(e.target.closest(".lb-nav")) return;
+  const now=Date.now(); if(now-lastTap<300){ if(scale>1) resetT(); else { scale=2.5; applyT(); } } lastTap=now; });
+document.addEventListener("keydown", e=>{ if(lb.hidden) return;
+  if(e.key==="Escape") closeLightbox(); else if(e.key==="ArrowLeft") nav(-1); else if(e.key==="ArrowRight") nav(1); });
 
 /* ============================================================
-   10) 부트스트랩
+   12) 부트스트랩
    ============================================================ */
 buildCards();
 updateSelUI();
 await initStore();
-store.onBallots(b=>{ latestBallots=b||{}; if(!document.getElementById("results").hidden) renderResults(); });
-
-if(hasVoted()){
-  selected.clear();
-  updateSelUI();
-  document.getElementById("submitBtn").textContent="투표 완료 ✓";
-  showResults(true);
-}
+store.onBallots(b=>{ latestBallots=b||{}; if(adminAuthed) renderAdmin(); });
+store.onMeta(m=>{ isClosed=!!(m&&m.closed); applyClosed(); });
+if(hasVoted() && !isClosed){ document.getElementById("doneNote").hidden=false; updateSelUI(); }
 </script>
 </body>
 </html>
