@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Genius TFT — 미팅 핵심 정리 카드뉴스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#16284d;
+    --navy-2:#1f3b73;
+    --blue:#2f6bff;
+    --sky:#5b9bff;
+    --ink:#1b2434;
+    --muted:#5b6678;
+    --line:#e7ebf2;
+    --bg:#eef1f6;
+    --card:#ffffff;
+    --soft:#f4f6fb;
+    --accent:#2f6bff;
+    --gold:#c8932b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    background:var(--bg);
+    font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* ---- Page chrome ---- */
+  .toolbar{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 22px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .toolbar .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);font-size:15px;letter-spacing:.2px;}
+  .toolbar .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(47,107,255,.15);}
+  .toolbar .hint{font-size:12px;color:var(--muted);font-weight:400;}
+
+  .wrap{max-width:560px;margin:0 auto;padding:34px 16px 80px;display:flex;flex-direction:column;gap:34px;}
+
+  /* ---- Card base : 1080 x 1350 (4:5) ---- */
+  .card{
+    position:relative;width:100%;aspect-ratio:1080/1350;
+    background:var(--card);border-radius:26px;overflow:hidden;
+    box-shadow:0 20px 50px -22px rgba(22,40,77,.4),0 2px 8px rgba(22,40,77,.06);
+    display:flex;flex-direction:column;
+  }
+  .pad{padding:9% 9% 8.5%;display:flex;flex-direction:column;height:100%;}
+
+  /* index pill */
+  .idx{
+    position:absolute;top:6.5%;right:8%;z-index:3;
+    font-size:13px;font-weight:700;letter-spacing:1px;color:var(--muted);
+  }
+  .idx b{color:var(--navy);}
+
+  /* kicker / eyebrow */
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+    font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--blue);
+  }
+  .kicker .bar{width:22px;height:3px;border-radius:2px;background:var(--blue);}
+
+  .title{
+    margin-top:18px;font-weight:900;color:var(--navy);
+    font-size:clamp(26px,7.2vw,40px);line-height:1.25;letter-spacing:-.5px;
+  }
+  .body{
+    margin-top:18px;font-size:clamp(15px,4vw,18px);line-height:1.85;
+    color:#3c4658;font-weight:400;
+  }
+  .body strong{color:var(--navy);font-weight:700;}
+  .grow{flex:1 1 auto;}
+
+  /* highlight box */
+  .hl{
+    margin-top:22px;align-self:flex-start;
+    background:linear-gradient(180deg,#eef3ff,#e6edff);
+    border:1px solid #d7e1ff;border-left:4px solid var(--blue);
+    border-radius:14px;padding:14px 18px;
+    font-size:clamp(15px,4.2vw,18px);font-weight:700;color:var(--navy-2);
+  }
+
+  /* keyword tags */
+  .tags{margin-top:22px;display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{
+    font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--blue);
+    background:#eef3ff;border:1px solid #d7e1ff;border-radius:999px;padding:8px 14px;
+  }
+
+  /* footer label */
+  .foot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    font-size:12.5px;font-weight:500;color:var(--muted);
+  }
+  .foot .lab{
+    display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);
+  }
+  .foot .lab .sq{width:8px;height:8px;border-radius:2px;background:var(--blue);}
+
+  .icon{width:34px;height:34px;display:block;}
+  .icon svg{width:100%;height:100%;}
+
+  /* ---------- Card 1 : Cover ---------- */
+  .cover{
+    background:
+      radial-gradient(120% 80% at 80% 12%, #27407a 0%, rgba(39,64,122,0) 55%),
+      radial-gradient(130% 90% at 12% 95%, #1a4fb0 0%, rgba(26,79,176,0) 50%),
+      linear-gradient(160deg,#16284d 0%,#13213f 60%,#101a33 100%);
+    color:#fff;
+  }
+  .cover .pad{justify-content:space-between;}
+  /* decorative network */
+  .cover .net{position:absolute;inset:0;opacity:.5;}
+  .cover .net circle{fill:#8fb6ff;}
+  .cover .net line{stroke:#5b86d6;stroke-width:1;opacity:.5;}
+  .cover .glass{
+    align-self:flex-start;max-width:88%;
+    background:rgba(13,26,54,.42);border:1px solid rgba(143,182,255,.28);
+    backdrop-filter:blur(6px);border-radius:20px;padding:26px 26px 28px;
+  }
+  .cover .badge{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:12.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    color:#bcd4ff;border:1px solid rgba(143,182,255,.4);border-radius:999px;padding:7px 14px;
+  }
+  .cover .badge .led{width:8px;height:8px;border-radius:50%;background:#5b9bff;box-shadow:0 0 10px #5b9bff;}
+  .cover h1{
+    margin-top:20px;font-weight:900;font-size:clamp(34px,9.5vw,52px);line-height:1.18;letter-spacing:-1px;
+    background:linear-gradient(180deg,#ffffff,#bcd4ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .cover .lead{
+    margin-top:18px;font-size:clamp(15px,4.1vw,18px);line-height:1.8;font-weight:400;color:#dbe6ff;
+  }
+  .cover .lead b{color:#fff;font-weight:700;}
+  .cover .tagline{position:relative;z-index:2;}
+  .cover .label{
+    display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.5px;color:#9fb8e6;
+  }
+  .cover .label .pipe{color:#5b86d6;}
+  .cover .label b{color:#fff;font-weight:800;letter-spacing:1px;}
+
+  /* ---------- Card 4 : repository ---------- */
+  .repo-stage{
+    margin:6% 0;flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:linear-gradient(180deg,#f6f9ff,#eef3ff);border:1px solid #e1e9ff;border-radius:20px;padding:34px 22px;
+  }
+  .repo-stage .big{
+    margin-top:16px;font-size:clamp(22px,6.2vw,30px);font-weight:900;color:var(--navy);letter-spacing:-.5px;line-height:1.3;
+  }
+  .repo-stage .sub{margin-top:8px;font-size:13.5px;font-weight:600;color:var(--blue);letter-spacing:.5px;}
+
+  /* ---------- Card 6 : schedule + action ---------- */
+  .two{display:flex;flex-direction:column;gap:16px;margin-top:20px;flex:1 1 auto;}
+  .block{
+    background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:18px 20px;
+  }
+  .block .h{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.5px;color:var(--blue);text-transform:uppercase;}
+  .block .h .ic{width:20px;height:20px;color:var(--blue);}
+  .block ul{margin-top:12px;list-style:none;display:flex;flex-direction:column;gap:10px;}
+  .block li{display:flex;gap:10px;font-size:15px;line-height:1.55;color:#3c4658;}
+  .block li .ck{flex:0 0 auto;width:18px;height:18px;margin-top:2px;color:var(--blue);}
+  .goalbox{
+    margin-top:4px;display:flex;gap:12px;
+    background:linear-gradient(135deg,#16284d,#1f3b73);color:#fff;border-radius:18px;padding:20px 22px;
+    box-shadow:0 14px 30px -16px rgba(22,40,77,.7);
+  }
+  .goalbox .gi{flex:0 0 auto;width:34px;height:34px;color:#ffd98a;}
+  .goalbox .gt{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9fb8e6;}
+  .goalbox .gv{margin-top:6px;font-size:clamp(17px,4.8vw,21px);font-weight:900;line-height:1.4;}
+  .goalbox .gv .g{color:#ffd98a;}
+  .goalbox .gv .p{color:#bcd4ff;}
+
+  @media print{
+    .toolbar{display:none;}
+    body{background:#fff;}
+    .wrap{gap:0;padding:0;max-width:none;}
+    .card{border-radius:0;box-shadow:none;page-break-after:always;width:1080px;height:1350px;aspect-ratio:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="brand"><span class="dot"></span> AI Genius TFT · Meeting Update</div>
+  <div class="hint">세로형 카드뉴스 1080×1350 · 6장 (스크롤 / 인쇄로 저장)</div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===== 1장 : 표지 ===== -->
+  <section class="card cover" id="c1">
+    <svg class="net" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <line x1="60" y1="70" x2="150" y2="120"/><line x1="150" y1="120" x2="300" y2="80"/>
+      <line x1="300" y1="80" x2="350" y2="180"/><line x1="150" y1="120" x2="120" y2="260"/>
+      <line x1="120" y1="260" x2="280" y2="300"/><line x1="280" y1="300" x2="350" y2="180"/>
+      <line x1="120" y1="260" x2="70" y2="400"/><line x1="280" y1="300" x2="320" y2="430"/>
+      <line x1="70" y1="400" x2="200" y2="440"/><line x1="200" y1="440" x2="320" y2="430"/>
+      <circle cx="60" cy="70" r="4"/><circle cx="150" cy="120" r="6"/><circle cx="300" cy="80" r="5"/>
+      <circle cx="350" cy="180" r="4"/><circle cx="120" cy="260" r="7"/><circle cx="280" cy="300" r="6"/>
+      <circle cx="70" cy="400" r="5"/><circle cx="320" cy="430" r="4"/><circle cx="200" cy="440" r="6"/>
+    </svg>
+    <div class="idx" style="color:#9fb8e6">01 / <b style="color:#fff">06</b></div>
+    <div class="pad">
+      <div class="glass">
+        <span class="badge"><span class="led"></span> Meeting Recap</span>
+        <h1>AI TFT 미팅<br/>핵심 정리</h1>
+        <p class="lead">프로세스 소통, <b>Use case 공유</b>, 학습 지원,<br/><b>7월 Action items</b>까지 한눈에.</p>
+      </div>
+      <div class="tagline">
+        <div class="label"><b>AI&nbsp;Genius&nbsp;TFT</b><span class="pipe">/</span> Meeting Update</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2장 : 운영 방향 ===== -->
+  <section class="card" id="c2">
+    <div class="idx">02 / <b>06</b></div>
+    <div class="pad">
+      <span class="kicker"><span class="bar"></span> 운영 방향</span>
+      <h2 class="title">정기 소통 주기,<br/>추가 논의 필요</h2>
+      <p class="body">
+        팀끼리 주기적으로 만나 <strong>process 관련 소통</strong>을 강화할 필요가 있다는 의견이 있었습니다.
+        보다 적절한 운영 주기는 추후 논의할 예정입니다.
+      </p>
+      <div class="hl">“월 1회는 다소 적다”는 의견</div>
+      <div class="grow"></div>
+      <div class="foot">
+        <span class="lab"><span class="sq"></span> 정기 소통 강화</span>
+        <span class="icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="#2f6bff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="9" width="26" height="22" rx="4"/>
+            <path d="M6 16h26"/><path d="M13 5v6M25 5v6"/>
+            <path d="M30 33l-6 1 1-6 11-11a3 3 0 014 4L29 33"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3장 : Use case 방향성 ===== -->
+  <section class="card" id="c3">
+    <div class="idx">03 / <b>06</b></div>
+    <div class="pad">
+      <span class="kicker"><span class="bar"></span> Use case 방향성</span>
+      <h2 class="title">구분보다 중요한 건<br/>적합한 툴 활용</h2>
+      <p class="body">
+        <strong>Gen AI 사용</strong>과 <strong>Agent 생성</strong>을 구분하는 것 자체보다,
+        업무 목적에 맞는 적합한 <strong>tool</strong>을 활용해 Use case를 발굴하는 방향이 더 중요하다는 의견이 공유되었습니다.
+      </p>
+      <div class="tags">
+        <span class="tag">Purpose-driven</span>
+        <span class="tag">Tool fit</span>
+        <span class="tag">Use case</span>
+      </div>
+      <div class="grow"></div>
+      <div class="foot">
+        <span class="lab"><span class="sq"></span> 목적 중심 발굴</span>
+        <span class="icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="#2f6bff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 6a13 13 0 00-8 23c1.5 1.2 2 2.4 2 4h12c0-1.6.5-2.8 2-4a13 13 0 00-8-23z"/>
+            <path d="M19 37h10M20 42h8"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4장 : 공유/저장소 ===== -->
+  <section class="card" id="c4">
+    <div class="idx">04 / <b>06</b></div>
+    <div class="pad">
+      <span class="kicker"><span class="bar"></span> 공유 · 저장소</span>
+      <h2 class="title">AI 자산은 Teams<br/>SharePoint에 축적</h2>
+      <div class="repo-stage">
+        <span class="icon" style="width:48px;height:48px">
+          <svg viewBox="0 0 48 48" fill="none" stroke="#2f6bff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 14a3 3 0 013-3h9l4 4h13a3 3 0 013 3v17a3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+            <path d="M16 31a6 6 0 011-12 8 8 0 0115 1 5 5 0 01-1 11z"/>
+          </svg>
+        </span>
+        <div class="big">AI Genius Team<br/>(SharePoint)</div>
+        <div class="sub">프롬프트 · Agent · Use case 보관소</div>
+      </div>
+      <p class="body" style="margin-top:18px">
+        향후 관련 자료를 <strong>주기적으로 업로드</strong>하는 방향이 적절해 보이며,
+        업로드 형식·주기는 추후 논의할 예정입니다.
+      </p>
+      <div class="grow"></div>
+      <div class="foot"><span class="lab"><span class="sq"></span> 자산 축적 채널 오픈</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 5장 : 학습 지원 ===== -->
+  <section class="card" id="c5">
+    <div class="idx">05 / <b>06</b></div>
+    <div class="pad">
+      <span class="kicker"><span class="bar"></span> 학습 지원</span>
+      <h2 class="title">AI 학습을 위한<br/>도서 지원 가능</h2>
+      <p class="body">
+        AI 학습을 위한 <strong>도서 지원</strong>이 가능합니다.
+        구체적으로 어떤 도서를 지원할지는 추후 논의 예정이며,
+        추천 도서가 있다면 자유롭게 공유 부탁드립니다.
+      </p>
+      <div class="grow" style="display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 120 90" width="58%" fill="none" stroke="#2f6bff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M60 26C50 18 34 16 22 18v50c12-2 28 0 38 8 10-8 26-10 38-8V18c-12-2-28 0-38 8z"/>
+          <path d="M60 26v40"/>
+          <path d="M30 28c6-1 14-.5 20 2M30 40c6-1 14-.5 20 2M70 30c6-2.5 14-3 20-2M70 42c6-2.5 14-3 20-2" stroke="#9fc0ff" stroke-width="2.4"/>
+        </svg>
+      </div>
+      <div class="hl" style="background:linear-gradient(180deg,#fff7e8,#fff1d6);border-color:#f3dca7;border-left-color:#c8932b;color:#8a6516">📚 추천 도서 의견 환영</div>
+      <div class="foot" style="margin-top:18px"><span class="lab"><span class="sq" style="background:#c8932b"></span> 학습 참여 유도</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 6장 : 일정 + 액션 ===== -->
+  <section class="card" id="c6">
+    <div class="idx">06 / <b>06</b></div>
+    <div class="pad">
+      <span class="kicker"><span class="bar"></span> Action Reminder</span>
+      <h2 class="title">7월 전체 미팅 전<br/>체크 포인트</h2>
+      <div class="two">
+        <div class="block">
+          <div class="h">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+            일정
+          </div>
+          <ul>
+            <li><svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>TFT 전체 미팅은 <b>월 1회</b> 예정</li>
+            <li><svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>7월 미팅 일정은 확정 후 <b>초대 발송</b></li>
+            <li><svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>미팅 후 <b>단체 저녁 식사</b> 예정</li>
+          </ul>
+        </div>
+        <div class="goalbox">
+          <svg class="gi" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 6h20v6a10 10 0 01-20 0z"/><path d="M14 9H8a6 6 0 006 8M34 9h6a6 6 0 01-6 8"/>
+            <path d="M24 22v8M18 42h12M20 42c0-4 8-4 8 0"/>
+          </svg>
+          <div>
+            <div class="gt">Action Items</div>
+            <div class="gv"><span class="g">7월까지 Gold</span> / <span class="p">9월까지 Platinum</span> 완료</div>
+          </div>
+        </div>
+      </div>
+      <div class="grow"></div>
+      <div class="foot"><span class="lab"><span class="sq"></span> AI Genius TFT</span><span>July Meeting Reminder</span></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
