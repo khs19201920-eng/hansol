@@ -178,21 +178,31 @@ function extractDate(text, defYear){
   if(defYear && (m = text.match(/(?<!\d)(\d{1,2})[.\-\/](\d{1,2})(?!\d)/))) return mkDate(defYear,+m[1],+m[2]);
   return null;
 }
-// 문자열에서 금액 추출. preferKeyword=true 이면 합계/총액/원 근처 우선
+// 문자열에서 금액 추출. preferKeyword=true 이면 결제금액/합계 등 키워드 줄 우선(영수증용)
+// 실제 영수증은 '요금총액 (Total Fare) :' 다음 줄에 금액이 오기도 하므로 키워드줄+다음 2줄까지 탐색
+const AMT_TOKEN = /(\d{1,3}(?:[.,]\d{3})+|\d{4,})/g;   // 14,800 / 103,500 / 19.700 / 40000
+const amtOnLine = s => { const m=[...s.matchAll(AMT_TOKEN)].map(x=>toInt(x[0])); return m.length ? Math.max(...m) : null; };
 function extractAmount(text, preferKeyword){
-  // '원' 또는 '₩' 인접 금액 우선
-  let m = [...text.matchAll(/(?:₩\s*)?(\d{1,3}(?:,\d{3})+|\d{3,})\s*원?/g)];
-  const won = [...text.matchAll(/(\d{1,3}(?:,\d{3})+|\d{3,})\s*원/g)];
-  if(won.length) return toInt(won[won.length-1][1]);
+  const lines = String(text).split(/\n/).map(s=>s.trim());
   if(preferKeyword){
-    const kw = text.match(/(?:합\s*계|총\s*액|결제금액|받을금액|합계금액)[^\d]{0,6}(\d{1,3}(?:,\d{3})+|\d{3,})/);
-    if(kw) return toInt(kw[1]);
+    // 1순위: 실제 결제(청구) 금액 키워드,  2순위: 합계/총액
+    const groups = [ /결제\s*금?액|결제\s*요금|요금\s*총액|Total\s*Fare|받을\s*금액/i, /합\s*계|총\s*액/ ];
+    for(const re of groups){
+      for(let i=0;i<lines.length;i++){
+        if(re.test(lines[i])){
+          for(let j=i;j<Math.min(lines.length,i+3);j++){ const a=amtOnLine(lines[j]); if(a) return a; }
+        }
+      }
+    }
   }
-  const toks = [...text.matchAll(/(\d{1,3}(?:,\d{3})+|\d{3,})/g)].map(x=>toInt(x[1])).filter(v=>v>0);
-  if(!toks.length) return null;
-  // 콤마 있는(=금액일 확률↑) 토큰 우선, 없으면 최댓값
-  const commaToks = [...text.matchAll(/(\d{1,3}(?:,\d{3})+)/g)].map(x=>toInt(x[1]));
-  return (commaToks.length ? commaToks : toks).sort((a,b)=>b-a)[0];
+  // '원' 인접 금액
+  const won = [...String(text).matchAll(/(\d{1,3}(?:[.,]\d{3})+|\d{3,})\s*원/g)];
+  if(won.length) return toInt(won[won.length-1][1]);
+  // 콤마/점 구분 최대 금액, 없으면 4자리 이상 최대
+  const commaToks = [...String(text).matchAll(/(\d{1,3}(?:[.,]\d{3})+)/g)].map(x=>toInt(x[1]));
+  if(commaToks.length) return Math.max(...commaToks);
+  const any = [...String(text).matchAll(/(\d{4,})/g)].map(x=>toInt(x[1]));
+  return any.length ? Math.max(...any) : null;
 }
 const toInt = s => parseInt(String(s).replace(/[^\d]/g,''),10) || 0;
 
@@ -236,6 +246,51 @@ function detectTxnRow(line, defYear){
 }
 function parseTransactions(lines, defYear){
   return lines.map(l=>detectTxnRow(l, defYear)).filter(Boolean);
+}
+
+/* ---- SAP Concur(컨쿼) Expense Report 전용 파서 ----
+   Concur PDF는 표 셀이 여러 줄로 흩어져 추출된다. 신뢰 앵커:
+   - 번호+거래일 줄:  "8 06/29/2026 Taxi"   (MM/DD/YYYY 미국식)
+   - 금액 줄:        "KR CBCP 40,000"       (통화코드 CBCP 뒤 금액)
+   가맹점(한글)은 조각으로 흩어져 있어 가장 가까운 번호줄에 귀속시킨다(표시용). */
+const CONCUR_NUMDATE = /^(\d{1,3})\s+(\d{2})\/(\d{2})\/(\d{4})\b/;
+const CONCUR_HEADER = /Citibank|CBCP|KRW|Attendees|Guests|Meals|Rail|Bus|Public|Transport|Taxi|Purpose|Expense|Report|Currency|Org Unit|Cost Center|Project|Custom|Approval|Employee|Amount|Vendor|Internal|External|Payment|Undefined|Submitted/i;
+const hasHangul = s => /[가-힣]/.test(s);
+const stripConcurEng = s => s
+  .replace(/Citibank|CBCP|KRW|Taxi|Transport|Rail\/Bus\/Public|Rail|Bus|Public|Internal\/External|Internal|External|Meals\s*-?|Guests\s*\(No HCPs\)|Undefined|KR\b/gi,'')
+  .replace(/[|]/g,'').replace(/\s+/g,' ').trim();
+
+function isConcurReport(lines){
+  return /Expense Report|Expenses Requiring Receipts/i.test(lines.join('\n')) || lines.some(l=>CONCUR_NUMDATE.test(l));
+}
+function parseConcur(lines){
+  const numIdx = [];
+  lines.forEach((l,i)=>{ if(CONCUR_NUMDATE.test(l)) numIdx.push(i); });
+  // 한글 가맹점 조각을 4줄 이내 가장 가까운 번호줄에 귀속 (상단 리포트 헤더 잡음 배제)
+  const vendorFor = {};
+  lines.forEach((l,i)=>{
+    if(CONCUR_NUMDATE.test(l) || /CBCP/i.test(l)) return;
+    const frag = stripConcurEng(l);
+    if(!frag || !hasHangul(frag)) return;
+    let best=-1, bd=1e9;
+    numIdx.forEach(ni=>{ const d=Math.abs(ni-i); if(d<bd){bd=d;best=ni;} });
+    if(best<0 || bd>4) return;                 // 거리 4줄 초과면 무관한 잡음으로 간주
+    (vendorFor[best]=vendorFor[best]||[]).push([i,frag]);
+  });
+  const txns = [];
+  for(const i of numIdx){
+    const m = lines[i].match(CONCUR_NUMDATE);
+    const date = mkDate(+m[4], +m[2], +m[3]);   // MM/DD/YYYY → 정규화
+    let amount = null;
+    for(let j=i;j<lines.length && j<i+7;j++){
+      if(j>i && CONCUR_NUMDATE.test(lines[j])) break;    // 다음 거래 진입 전까지
+      const am = lines[j].match(/CBCP\s+([\d.,]+)/i);
+      if(am){ amount = toInt(am[1]); break; }
+    }
+    const merchant = (vendorFor[i]||[]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join('').replace(/\s+/g,'');
+    txns.push({ id:nid(), no:m[1], yymmdd:date.yymmdd, dateDisp:date.dateDisp, amount, merchant, raw:lines[i] });
+  }
+  return txns;
 }
 
 /* ===================== 매칭 ===================== */
@@ -373,8 +428,9 @@ async function handlePdf(file){
     lastLines = await readPdfLines(file);
     $('rawText').textContent = lastLines.join('\n');
     const defYear = parseInt($('defYear').value)||2026;
-    transactions = parseTransactions(lastLines, defYear);
-    st.innerHTML = `✅ ${file.name} — 결제내역 <b>${transactions.length}</b>건 추출(자동). 표에서 확인·수정하세요.`;
+    const concur = isConcurReport(lastLines);
+    transactions = concur ? parseConcur(lastLines) : parseTransactions(lastLines, defYear);
+    st.innerHTML = `✅ ${file.name} — ${concur?'<b>SAP Concur</b> 리포트 인식, ':''}결제내역 <b>${transactions.length}</b>건 추출(자동). 표에서 확인·수정하세요.`;
     recompute(); renderAll();
   }catch(err){
     st.innerHTML = '⚠ PDF 분석 실패: '+esc(err.message)+' — 행을 직접 추가할 수 있습니다.';
@@ -465,7 +521,9 @@ $('addTxn').addEventListener('click', ()=>{
 });
 $('reparse').addEventListener('click', ()=>{
   if(!lastLines.length) return;
-  transactions = parseTransactions(lastLines, parseInt($('defYear').value)||2026);
+  transactions = isConcurReport(lastLines)
+    ? parseConcur(lastLines)
+    : parseTransactions(lastLines, parseInt($('defYear').value)||2026);
   recompute(); renderAll();
 });
 $('dlZip').addEventListener('click', downloadZip);
