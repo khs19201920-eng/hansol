@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>컨쿼 법인카드 영수증 매칭 에이전트</title>
+<!-- 라이브러리(코드)만 CDN에서 로드합니다. 사용자 데이터(PDF/영수증/금액)는 절대 외부로 전송되지 않습니다. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2740; --line:#2b3654;
+    --text:#e7ecf5; --muted:#94a3c4; --accent:#4f8cff; --accent2:#3b6fd6;
+    --ok:#22c55e; --warn:#eab308; --bad:#ef4444; --amb:#eab308;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5;font-size:14px}
+  header{padding:20px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header h1{margin:0 0 4px;font-size:19px}
+  header .note{color:var(--muted);font-size:12.5px}
+  .privacy{display:inline-block;margin-top:8px;padding:4px 10px;border:1px solid var(--line);border-radius:20px;
+    color:var(--muted);font-size:11.5px;background:var(--panel2)}
+  main{max-width:1180px;margin:0 auto;padding:24px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:20px}
+  .step h2{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .step .badge{background:var(--accent);color:#fff;width:22px;height:22px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .step .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  .drop{border:2px dashed var(--line);border-radius:10px;padding:26px;text-align:center;color:var(--muted);
+    cursor:pointer;transition:.15s;background:var(--panel2)}
+  .drop:hover{border-color:var(--accent);color:var(--text)}
+  .drop.over{border-color:var(--accent);background:#1b2540;color:var(--text)}
+  .drop input{display:none}
+  .drop b{color:var(--accent)}
+  button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--text);padding:8px 14px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{background:var(--accent2)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle}
+  th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:12px}
+  td input{width:100%;background:transparent;border:none;color:var(--text);font-size:13px;font-family:inherit}
+  td input:focus{outline:1px solid var(--accent);border-radius:4px}
+  td.num input{text-align:right;font-variant-numeric:tabular-nums}
+  .rcv-cell{font-size:12px;color:var(--muted)}
+  .rcv-cell.on{color:var(--ok)}
+  .del{color:var(--bad);background:none;border:none;cursor:pointer;font-size:15px;padding:0 4px}
+  details{margin-top:12px}
+  summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+  pre.raw{background:#0b1020;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;
+    max-height:260px;font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-all}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .card .thumb{height:150px;background:#0b1020 center/contain no-repeat;border-bottom:1px solid var(--line)}
+  .card .body{padding:12px;display:flex;flex-direction:column;gap:8px}
+  .card .fname{font-size:11px;color:var(--muted);word-break:break-all}
+  .field{display:flex;align-items:center;gap:8px}
+  .field label{width:46px;color:var(--muted);font-size:12px;flex:none}
+  .field input,.field select{flex:1;background:#0b1020;border:1px solid var(--line);color:var(--text);
+    border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit}
+  .status{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+  .s-matched{background:rgba(34,197,94,.15);color:var(--ok)}
+  .s-ambiguous{background:rgba(234,179,8,.15);color:var(--amb)}
+  .s-unmatched{background:rgba(148,163,196,.15);color:var(--muted)}
+  .s-conflict{background:rgba(239,68,68,.15);color:var(--bad)}
+  .s-ocr{background:rgba(79,140,255,.15);color:var(--accent)}
+  .newname{font-size:12px;color:var(--ok);font-variant-numeric:tabular-nums;word-break:break-all}
+  .newname.off{color:var(--muted)}
+  .summary-bar{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:12.5px}
+  .summary-bar b{color:var(--text)}
+  .empty{color:var(--muted);font-size:13px;padding:8px 0}
+  .warn-box{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.35);color:#f5d97a;
+    border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:12px;display:none}
+  .warn-box.show{display:block}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>컨쿼 법인카드 영수증 매칭 에이전트</h1>
+  <div class="note">법인카드 내역(PDF)을 넣고 영수증 사진을 넣으면, 금액·날짜로 자동 매칭하고 파일명을 <b>번호_yymmdd_금액</b> 으로 바꿔 내려받습니다.</div>
+  <span class="privacy">🔒 모든 데이터는 이 브라우저 안에서만 처리되며 외부로 전송되지 않습니다.</span>
+</header>
+
+<main>
+  <!-- STEP 1: PDF 내역 -->
+  <section class="step">
+    <h2><span class="badge">1</span> 법인카드 내역 리포트(PDF)</h2>
+    <p class="sub">컨쿼에서 받은 내역 리포트 PDF를 드래그앤드랍하세요. 추출된 표는 직접 수정할 수 있습니다.</p>
+    <label class="drop" id="pdfDrop">
+      <div>📄 여기에 <b>PDF</b>를 놓거나 클릭해서 선택</div>
+      <input type="file" id="pdfInput" accept="application/pdf">
+    </label>
+    <div id="pdfStatus" class="empty" style="display:none"></div>
+
+    <div id="txnWrap" style="display:none">
+      <div class="row-actions">
+        <label style="color:var(--muted);font-size:12.5px">연도 없는 날짜(mm/dd) 기본 연도:
+          <input id="defYear" type="number" style="width:80px;background:#0b1020;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 6px" value="2026">
+        </label>
+        <button id="addTxn">+ 행 추가</button>
+        <button id="reparse">🔁 이 연도로 재파싱</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="txnTable">
+          <thead><tr>
+            <th style="width:70px">번호</th><th style="width:120px">결제일(yymmdd)</th>
+            <th style="width:120px">금액</th><th>가맹점</th>
+            <th style="width:150px">매칭된 영수증</th><th style="width:36px"></th>
+          </tr></thead>
+          <tbody id="txnBody"></tbody>
+        </table>
+      </div>
+      <details><summary>PDF에서 추출한 원본 텍스트 보기 (오파싱 교정용)</summary>
+        <pre class="raw" id="rawText"></pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- STEP 2: 영수증 -->
+  <section class="step">
+    <h2><span class="badge">2</span> 영수증 사진</h2>
+    <p class="sub">영수증 이미지를 여러 장 한꺼번에 넣을 수 있습니다. 금액·날짜를 자동 인식(OCR)한 뒤 직접 검수·수정하세요.</p>
+    <label class="drop" id="rcvDrop">
+      <div>🧾 여기에 <b>영수증 이미지</b>를 놓거나 클릭해서 선택 (여러 장 가능)</div>
+      <input type="file" id="rcvInput" accept="image/*" multiple>
+    </label>
+    <div id="ocrNote" class="warn-box"></div>
+    <div class="summary-bar" id="matchSummary" style="display:none"></div>
+    <div class="cards" id="rcvCards"></div>
+    <div id="rcvEmpty" class="empty">아직 추가된 영수증이 없습니다.</div>
+  </section>
+
+  <!-- STEP 3: 다운로드 -->
+  <section class="step">
+    <h2><span class="badge">3</span> 파일명 변경 후 다운로드</h2>
+    <p class="sub">매칭된 영수증만 <b>번호_yymmdd_금액.확장자</b> 형식으로 파일명을 바꿔 내려받습니다. 이후 컨쿼에서 파일명 보고 첨부하세요.</p>
+    <div class="row-actions">
+      <button class="primary" id="dlZip">⬇ 매칭된 영수증 전체 ZIP 다운로드</button>
+      <span id="dlCount" class="empty" style="padding:0"></span>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================== 상태 ===================== */
+let transactions = [];  // {id,no,yymmdd,dateDisp,amount,merchant,raw}
+let receipts = [];      // {id,file,url,ext,ocrText,amount,yymmdd,dateDisp,txnId,manual,status,candidates}
+let uid = 0;
+const nid = () => ++uid;
+
+const hasPdfjs = typeof pdfjsLib !== 'undefined';
+const hasTesseract = typeof Tesseract !== 'undefined';
+const hasZip = typeof JSZip !== 'undefined';
+if (hasPdfjs) pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ===================== 유틸: 추출기 ===================== */
+function mkDate(y, mo, d){
+  if(mo<1||mo>12||d<1||d>31) return null;
+  const p = n => String(n).padStart(2,'0');
+  const yy = p(y%100);
+  return { yymmdd: yy+p(mo)+p(d), dateDisp:`${y}-${p(mo)}-${p(d)}` };
+}
+// 문자열에서 날짜 1건 추출 (여러 포맷 허용)
+function extractDate(text, defYear){
+  let m;
+  if((m = text.match(/(20\d{2}|19\d{2})[.\-\/\s]\s*(\d{1,2})[.\-\/\s]\s*(\d{1,2})/))) return mkDate(+m[1],+m[2],+m[3]);
+  if((m = text.match(/(?<!\d)(\d{2})[.\-\/]\s*(\d{1,2})[.\-\/]\s*(\d{1,2})(?!\d)/))) return mkDate(2000+ +m[1],+m[2],+m[3]);
+  if((m = text.match(/(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)/))) return mkDate(2000+ +m[1],+m[2],+m[3]);
+  if(defYear && (m = text.match(/(?<!\d)(\d{1,2})[.\-\/](\d{1,2})(?!\d)/))) return mkDate(defYear,+m[1],+m[2]);
+  return null;
+}
+// 문자열에서 금액 추출. preferKeyword=true 이면 합계/총액/원 근처 우선
+function extractAmount(text, preferKeyword){
+  // '원' 또는 '₩' 인접 금액 우선
+  let m = [...text.matchAll(/(?:₩\s*)?(\d{1,3}(?:,\d{3})+|\d{3,})\s*원?/g)];
+  const won = [...text.matchAll(/(\d{1,3}(?:,\d{3})+|\d{3,})\s*원/g)];
+  if(won.length) return toInt(won[won.length-1][1]);
+  if(preferKeyword){
+    const kw = text.match(/(?:합\s*계|총\s*액|결제금액|받을금액|합계금액)[^\d]{0,6}(\d{1,3}(?:,\d{3})+|\d{3,})/);
+    if(kw) return toInt(kw[1]);
+  }
+  const toks = [...text.matchAll(/(\d{1,3}(?:,\d{3})+|\d{3,})/g)].map(x=>toInt(x[1])).filter(v=>v>0);
+  if(!toks.length) return null;
+  // 콤마 있는(=금액일 확률↑) 토큰 우선, 없으면 최댓값
+  const commaToks = [...text.matchAll(/(\d{1,3}(?:,\d{3})+)/g)].map(x=>toInt(x[1]));
+  return (commaToks.length ? commaToks : toks).sort((a,b)=>b-a)[0];
+}
+const toInt = s => parseInt(String(s).replace(/[^\d]/g,''),10) || 0;
+
+/* ===================== PDF 파싱 ===================== */
+async function readPdfLines(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const lines = [];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const rows = {};
+    tc.items.forEach(it=>{
+      if(!it.str.trim()) return;
+      const y = Math.round(it.transform[5]);      // y좌표로 줄 묶기
+      (rows[y] = rows[y] || []).push(it);
+    });
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const t = rows[y].sort((a,b)=>a.transform[4]-b.transform[4])
+                       .map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+      if(t) lines.push(t);
+    });
+  }
+  return lines;
+}
+// 한 줄에서 결제 행 추출 (날짜+금액 둘 다 있어야 인정)
+function detectTxnRow(line, defYear){
+  const date = extractDate(line, defYear);
+  const amount = extractAmount(line, false);
+  if(!date || !amount) return null;
+  const noM = line.match(/^\s*(\d{1,4})[\s.)]/);
+  const no = noM ? noM[1] : '';
+  // 가맹점: 숫자/날짜/금액 토큰을 제거한 나머지 텍스트
+  let merch = line
+    .replace(/(20\d{2}|19\d{2})[.\-\/\s]\s*\d{1,2}[.\-\/\s]\s*\d{1,2}/g,' ')
+    .replace(/(?<!\d)\d{2}[.\-\/]\s*\d{1,2}[.\-\/]\s*\d{1,2}(?!\d)/g,' ')
+    .replace(/(\d{1,3}(?:,\d{3})+|\d{3,})\s*원?/g,' ')
+    .replace(/[₩*|]/g,' ').replace(/\s+/g,' ').trim();
+  if(no) merch = merch.replace(new RegExp('^'+no+'\\b'),'').trim();
+  return { id:nid(), no, yymmdd:date.yymmdd, dateDisp:date.dateDisp, amount, merchant:merch, raw:line };
+}
+function parseTransactions(lines, defYear){
+  return lines.map(l=>detectTxnRow(l, defYear)).filter(Boolean);
+}
+
+/* ===================== 매칭 ===================== */
+function recompute(){
+  transactions.forEach(t => t.receiptIds = []);
+  receipts.forEach(r=>{
+    r.candidates = (r.amount && r.yymmdd)
+      ? transactions.filter(t=>t.amount===r.amount && t.yymmdd===r.yymmdd).map(t=>t.id) : [];
+    if(!r.manual) r.txnId = r.candidates.length===1 ? r.candidates[0] : null;
+    // 수동 지정인데 그 내역이 사라졌으면 해제
+    if(r.txnId && !transactions.find(t=>t.id===r.txnId)) { r.txnId=null; r.manual=false; }
+  });
+  receipts.forEach(r=>{ if(r.txnId){ const t=transactions.find(t=>t.id===r.txnId); if(t) t.receiptIds.push(r.id); }});
+  receipts.forEach(r=>{
+    if(r.ocring){ r.status='ocr'; return; }
+    if(r.txnId){
+      const t = transactions.find(t=>t.id===r.txnId);
+      r.status = (t && t.receiptIds.length>1) ? 'conflict' : 'matched';
+    } else if(r.candidates.length>1){ r.status='ambiguous'; }
+    else { r.status='unmatched'; }
+  });
+}
+
+/* ===================== 파일명 ===================== */
+function newNameFor(r){
+  if(!r.txnId) return null;
+  const t = transactions.find(t=>t.id===r.txnId);
+  if(!t) return null;
+  const no = (t.no||'0').toString().replace(/[^\w-]/g,'');
+  return `${no}_${t.yymmdd}_${t.amount}.${r.ext}`;
+}
+
+/* ===================== 렌더 ===================== */
+const $ = id => document.getElementById(id);
+
+function renderTxns(){
+  const wrap = $('txnWrap'), body = $('txnBody');
+  wrap.style.display = transactions.length || $('rawText').textContent ? 'block' : 'none';
+  body.innerHTML = '';
+  transactions.forEach(t=>{
+    const rids = t.receiptIds || [];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input data-f="no" value="${esc(t.no)}"></td>
+      <td><input data-f="yymmdd" value="${esc(t.yymmdd)}" placeholder="yymmdd"></td>
+      <td class="num"><input data-f="amount" value="${t.amount||''}"></td>
+      <td><input data-f="merchant" value="${esc(t.merchant)}"></td>
+      <td class="rcv-cell ${rids.length?'on':''}">${rids.length? rids.map(rid=>rcvName(rid)).join(', ') : '—'}</td>
+      <td><button class="del" title="행 삭제">✕</button></td>`;
+    tr.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('change', e=>{
+        const f = e.target.dataset.f;
+        t[f] = f==='amount' ? toInt(e.target.value) : e.target.value.trim();
+        recompute(); renderAll();
+      });
+    });
+    tr.querySelector('.del').addEventListener('click', ()=>{
+      transactions = transactions.filter(x=>x.id!==t.id);
+      recompute(); renderAll();
+    });
+    body.appendChild(tr);
+  });
+}
+const rcvName = rid => { const r=receipts.find(x=>x.id===rid); return r? r.file.name : '?'; };
+
+function renderReceipts(){
+  const box = $('rcvCards');
+  $('rcvEmpty').style.display = receipts.length ? 'none' : 'block';
+  box.innerHTML = '';
+  receipts.forEach(r=>{
+    const nn = newNameFor(r);
+    const opts = ['<option value="">— 결제내역 선택 —</option>'].concat(
+      transactions.map(t=>{
+        const label = `#${t.no||'?'} · ${t.dateDisp||t.yymmdd} · ${(t.amount||0).toLocaleString()}원${t.merchant?' · '+t.merchant:''}`;
+        const cand = r.candidates && r.candidates.includes(t.id) ? ' ✓' : '';
+        return `<option value="${t.id}" ${r.txnId===t.id?'selected':''}>${esc(label)}${cand}</option>`;
+      })).join('');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="thumb" style="background-image:url('${r.url}')"></div>
+      <div class="body">
+        <div class="fname">${esc(r.file.name)}</div>
+        <div>${statusBadge(r)}</div>
+        <div class="field"><label>금액</label><input data-f="amount" value="${r.amount||''}" ${r.ocring?'disabled':''} placeholder="숫자만"></div>
+        <div class="field"><label>날짜</label><input data-f="yymmdd" value="${esc(r.yymmdd||'')}" ${r.ocring?'disabled':''} placeholder="yymmdd"></div>
+        <div class="field"><label>매칭</label><select data-f="txn">${opts}</select></div>
+        <div class="newname ${nn?'':'off'}">${nn? '→ '+esc(nn) : '→ (매칭되면 새 파일명이 표시됩니다)'}</div>
+      </div>`;
+    card.querySelector('[data-f="amount"]').addEventListener('change', e=>{ r.amount=toInt(e.target.value); recompute(); renderAll(); });
+    card.querySelector('[data-f="yymmdd"]').addEventListener('change', e=>{ r.yymmdd=e.target.value.trim(); recompute(); renderAll(); });
+    card.querySelector('[data-f="txn"]').addEventListener('change', e=>{
+      const v = e.target.value;
+      r.txnId = v || null; r.manual = true;   // 사람이 고르면 수동 고정
+      recompute(); renderAll();
+    });
+    box.appendChild(card);
+  });
+}
+function statusBadge(r){
+  const map = {
+    matched:['s-matched','✅ 매칭됨'], ambiguous:['s-ambiguous','⚠ 후보 여럿 — 직접 선택'],
+    unmatched:['s-unmatched','· 미매칭'], conflict:['s-conflict','⛔ 중복 매칭'],
+    ocr:['s-ocr','<span class="spin"></span> 인식 중…']
+  };
+  const [cls,txt] = map[r.status] || map.unmatched;
+  return `<span class="status ${cls}">${txt}</span>`;
+}
+function renderSummary(){
+  const bar = $('matchSummary');
+  if(!receipts.length){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  const c = s => receipts.filter(r=>r.status===s).length;
+  bar.innerHTML = `<span>영수증 <b>${receipts.length}</b></span>
+    <span>✅ 매칭 <b>${c('matched')}</b></span>
+    <span>⚠ 모호 <b>${c('ambiguous')}</b></span>
+    <span>· 미매칭 <b>${c('unmatched')}</b></span>
+    <span>⛔ 중복 <b>${c('conflict')}</b></span>`;
+}
+function renderDownload(){
+  const n = receipts.filter(r=>newNameFor(r)).length;
+  $('dlCount').textContent = n ? `매칭된 영수증 ${n}개` : '매칭된 영수증이 없습니다';
+  $('dlZip').disabled = !n || !hasZip;
+}
+function renderAll(){ renderTxns(); renderReceipts(); renderSummary(); renderDownload(); }
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ===================== PDF 처리 ===================== */
+let lastLines = [];
+async function handlePdf(file){
+  const st = $('pdfStatus'); st.style.display='block';
+  if(!hasPdfjs){ st.innerHTML='⚠ PDF 라이브러리를 불러오지 못했습니다(오프라인?). 인터넷 연결 후 새로고침하거나 행을 직접 추가하세요.'; renderAll(); return; }
+  st.innerHTML = '<span class="spin"></span> PDF 분석 중…';
+  try{
+    lastLines = await readPdfLines(file);
+    $('rawText').textContent = lastLines.join('\n');
+    const defYear = parseInt($('defYear').value)||2026;
+    transactions = parseTransactions(lastLines, defYear);
+    st.innerHTML = `✅ ${file.name} — 결제내역 <b>${transactions.length}</b>건 추출(자동). 표에서 확인·수정하세요.`;
+    recompute(); renderAll();
+  }catch(err){
+    st.innerHTML = '⚠ PDF 분석 실패: '+esc(err.message)+' — 행을 직접 추가할 수 있습니다.';
+    console.error(err);
+  }
+}
+
+/* ===================== OCR 처리 ===================== */
+let worker = null, workerFailed = false;
+async function getWorker(){
+  if(worker) return worker;
+  if(workerFailed || !hasTesseract) return null;
+  try{ worker = await Tesseract.createWorker('kor+eng'); return worker; }
+  catch(e){ workerFailed = true; console.error(e); return null; }
+}
+async function handleReceipts(files){
+  const note = $('ocrNote');
+  if(!hasTesseract){
+    note.className='warn-box show';
+    note.textContent='ℹ OCR 라이브러리를 불러오지 못했습니다(오프라인?). 각 영수증의 금액·날짜를 직접 입력하면 매칭됩니다.';
+  }
+  for(const f of files){
+    if(!f.type.startsWith('image/')) continue;
+    const r = { id:nid(), file:f, url:URL.createObjectURL(f),
+      ext:(f.name.split('.').pop()||'jpg').toLowerCase(),
+      ocrText:'', amount:null, yymmdd:null, dateDisp:null, txnId:null, manual:false, status:'ocr', ocring:hasTesseract && !workerFailed, candidates:[] };
+    receipts.push(r);
+  }
+  recompute(); renderAll();
+  // 순차 OCR (동시에 돌리면 과부하)
+  for(const r of receipts){
+    if(!r.ocring) continue;
+    const w = await getWorker();
+    if(!w){ r.ocring=false; r.status='unmatched';
+      note.className='warn-box show';
+      note.textContent='ℹ OCR 엔진을 시작하지 못했습니다. 금액·날짜를 직접 입력해 주세요.';
+      recompute(); renderAll(); continue; }
+    try{
+      const { data } = await w.recognize(r.file);
+      r.ocrText = data.text || '';
+      r.amount = extractAmount(r.ocrText, true);
+      const d = extractDate(r.ocrText, parseInt($('defYear').value)||2026);
+      if(d){ r.yymmdd=d.yymmdd; r.dateDisp=d.dateDisp; }
+    }catch(e){ console.error(e); }
+    r.ocring = false;
+    recompute(); renderAll();
+  }
+}
+
+/* ===================== 다운로드 ===================== */
+async function downloadZip(){
+  if(!hasZip) return;
+  const zip = new JSZip();
+  const used = {};
+  let count = 0;
+  for(const r of receipts){
+    let name = newNameFor(r);
+    if(!name) continue;
+    if(used[name]){ const i=used[name]++; const dot=name.lastIndexOf('.'); name=name.slice(0,dot)+'_dup'+i+name.slice(dot); }
+    else used[name]=2;
+    zip.file(name, r.file);
+    count++;
+  }
+  if(!count) return;
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `receipts_renamed_${count}.zip`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ===================== 이벤트 배선 ===================== */
+function wireDrop(dropId, inputId, onFiles){
+  const drop = $(dropId), input = $(inputId);
+  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', ()=> drop.classList.remove('over'));
+  drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over');
+    if(e.dataTransfer.files.length) onFiles([...e.dataTransfer.files]); });
+  input.addEventListener('change', e=>{ if(e.target.files.length) onFiles([...e.target.files]); e.target.value=''; });
+}
+wireDrop('pdfDrop','pdfInput', files=> handlePdf(files[0]));
+wireDrop('rcvDrop','rcvInput', files=> handleReceipts(files));
+
+$('addTxn').addEventListener('click', ()=>{
+  transactions.push({ id:nid(), no:String(transactions.length+1), yymmdd:'', dateDisp:'', amount:0, merchant:'', raw:'' });
+  recompute(); renderAll();
+});
+$('reparse').addEventListener('click', ()=>{
+  if(!lastLines.length) return;
+  transactions = parseTransactions(lastLines, parseInt($('defYear').value)||2026);
+  recompute(); renderAll();
+});
+$('dlZip').addEventListener('click', downloadZip);
+
+// 라이브러리 로드 실패 안내
+window.addEventListener('load', ()=>{
+  if(!hasZip) $('dlZip').title = 'ZIP 라이브러리를 불러오지 못했습니다(오프라인?).';
+  renderAll();
+});
+</script>
+</body>
+</html>
