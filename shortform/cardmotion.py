@@ -56,6 +56,9 @@ class El:
     solid: bool = False    # 상자·원처럼 속이 찬 도형 (볼록 껍질로 마스크)
     flat: bool = False     # solid 도형을 단색으로 채움 (가려진 부분 복원 대신)
     disk: tuple = None     # (cx, cy, r): 가려진 원형 배경을 완전한 원으로 다시 그림
+    box: float = None      # 사진처럼 사각형 전체를 레이어로 (값 = 모서리 반경)
+    tilt: float = 0.0      # photo 등장 시 시작 기울기(도)
+    kb: float = 0.0        # 등장 후 사각형 안에서 천천히 확대(Ken Burns) 비율
     thr: float = None      # 배경 판정 임계값
     bgpts: list = field(default_factory=list)   # 배경으로 간주할 색을 뽑을 좌표
     excl: list = field(default_factory=list)    # 제외할 사각형
@@ -71,6 +74,7 @@ class Slide:
     camera: list           # [(t, cx, cy, view_w)]
     highlights: list = field(default_factory=list)  # [(t, (x0,y0,x1,y1))]
     sparks: list = field(default_factory=list)      # [(t, (x, y), size)]
+    sounds: list = field(default_factory=list)      # [(t, kind)] 카메라 이동 등 추가 효과음
 
 
 # ───────────────────────── 레이어 준비 ─────────────────────────
@@ -117,6 +121,18 @@ class CardScene:
             for ex0, ey0, ex1, ey1 in el.excl:
                 fg[max(ey0 - y0, 0):max(ey1 - y0, 0), max(ex0 - x0, 0):max(ex1 - x0, 0)] = 0
             fg = cv2.morphologyEx(fg, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
+            if el.box is not None:
+                rr = np.zeros((y1 - y0, x1 - x0), np.uint8)
+                r = int(el.box)
+                cv2.rectangle(rr, (r, 0), (x1 - x0 - 1 - r, y1 - y0 - 1), 1, -1)
+                cv2.rectangle(rr, (0, r), (x1 - x0 - 1, y1 - y0 - 1 - r), 1, -1)
+                for cx_, cy_ in [(r, r), (x1 - x0 - 1 - r, r), (r, y1 - y0 - 1 - r), (x1 - x0 - 1 - r, y1 - y0 - 1 - r)]:
+                    cv2.circle(rr, (cx_, cy_), r, 1, -1)
+                own = rr & (1 - claimed[y0:y1, x0:x1])
+                claimed[y0:y1, x0:x1] |= own
+                layers.append(Layer(el, img[y0:y1, x0:x1].astype(np.float32),
+                                    cv2.GaussianBlur(own.astype(np.float32), (0, 0), 0.8)))
+                continue
             if el.disk:
                 dcx, dcy, dr = el.disk
                 yy, xx = np.mgrid[y0:y1, x0:x1]
@@ -152,15 +168,14 @@ class CardScene:
             claimed[y0:y1, x0:x1] |= own
             layers.append(Layer(el, crop.astype(np.float32), alpha))
         self.layers = list(reversed(layers))
-        # 비워진 자리를 배경으로 메운 베이스 카드
+        # 비워진 자리를 카드 바탕색(단색)으로 메운 베이스 카드
         mask = cv2.dilate(claimed, np.ones((9, 9), np.uint8))
-        q = 4
-        small = cv2.resize(img, (n // q, n // q), interpolation=cv2.INTER_AREA)
-        smask = (cv2.resize(mask, (n // q, n // q), interpolation=cv2.INTER_AREA) > 0).astype(np.uint8)
-        fill = cv2.resize(cv2.inpaint(small, cv2.dilate(smask, np.ones((3, 3), np.uint8)), 5, cv2.INPAINT_TELEA),
-                          (n, n), interpolation=cv2.INTER_CUBIC).astype(np.float32)
+        inner = np.zeros_like(mask)
+        m0 = n // 12
+        inner[m0:n - m0, m0:n - m0] = 1
+        bgcol = np.median(img[(inner & (1 - mask)).astype(bool)], axis=0).astype(np.float32)
         m = cv2.GaussianBlur(mask.astype(np.float32), (0, 0), 2)[..., None]
-        self.base = img.astype(np.float32) * (1 - m) + fill * m
+        self.base = img.astype(np.float32) * (1 - m) + bgcol * m
         self.full = img.astype(np.float32)
 
     # ── 레이어 상태 ──
@@ -170,7 +185,7 @@ class CardScene:
         if p <= 0:
             return None
         e = out_cubic(p)
-        st = dict(a=1.0, s=1.0, dx=0.0, dy=0.0, wipe=None)
+        st = dict(a=1.0, s=1.0, dx=0.0, dy=0.0, wipe=None, rot=0.0, flash=0.0, kb=1.0)
         a = el.anim
         if a == "pop":
             st["s"] = 0.35 + 0.65 * out_back(p, 2.4)
@@ -182,12 +197,24 @@ class CardScene:
             d = {"rise": (0, 46), "drop": (0, -60), "left": (-150, 0), "right": (150, 0)}[a]
             st["dx"], st["dy"] = d[0] * (1 - out_back(p, 1.2)), d[1] * (1 - out_back(p, 1.2))
             st["a"] = smooth(p * 1.8)
+        elif a == "photo":
+            st["s"] = 1.45 - 0.45 * out_back(p, 1.3)
+            st["rot"] = el.tilt * (1 - out_back(p, 1.1))
+            st["dy"] = -70 * (1 - out_cubic(p))
+            st["a"] = smooth(p * 2.5)
+            q = (t - el.t - el.dur * 0.85) / 0.4
+            if 0 < q < 1:
+                st["flash"] = 0.85 * (1 - q) ** 2
         elif a == "fade":
             st["a"] = smooth(p)
         elif a in ("wipe", "wipel", "wiped"):
             st["wipe"] = (a, smooth(p) if p < 1 else None)
             if p >= 1:
                 st["wipe"] = None
+        if el.kb:
+            st["kb"] = 1 + el.kb * smooth((t - el.t - el.dur) / 7.0)
+        if el.kb:
+            st["kb"] = 1 + el.kb * smooth((t - el.t - el.dur) / 7.0)
         for pt in el.pulse:
             q = (t - pt) / 0.5
             if 0 < q < 1:
@@ -199,6 +226,13 @@ class CardScene:
         x0, y0, x1, y1 = el.rect
         w, h = x1 - x0, y1 - y0
         alpha = layer.alpha * st["a"]
+        src = layer.rgb
+        if st["kb"] > 1.0005:
+            z = st["kb"]
+            Mz = cv2.getRotationMatrix2D((w / 2 + (z - 1) * w * 0.15, h / 2), 0, z)
+            src = cv2.warpAffine(src, Mz, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+        if st["flash"] > 0:
+            src = src * (1 - st["flash"]) + 255 * st["flash"]
         if st["wipe"]:
             kind, p = st["wipe"]
             soft = 30.0
@@ -211,15 +245,22 @@ class CardScene:
             alpha = alpha * ramp
         s, dx, dy = st["s"], st["dx"], st["dy"]
         n = self.size
-        if abs(s - 1) < 1e-3 and abs(dx) < 0.5 and abs(dy) < 0.5:
-            X0, Y0, rgb, a = x0, y0, layer.rgb, alpha
+        rot = st["rot"]
+        if abs(s - 1) < 1e-3 and abs(dx) < 0.5 and abs(dy) < 0.5 and abs(rot) < 0.01:
+            X0, Y0, rgb, a = x0, y0, src, alpha
         else:
             cx, cy = x0 + w / 2 + dx, y0 + h / 2 + dy
-            X0, Y0 = int(math.floor(cx - w * s / 2)) - 1, int(math.floor(cy - h * s / 2)) - 1
-            X1, Y1 = int(math.ceil(cx + w * s / 2)) + 1, int(math.ceil(cy + h * s / 2)) + 1
-            M = np.float32([[s, 0, cx - s * w / 2 - X0], [0, s, cy - s * h / 2 - Y0]])
+            th = math.radians(rot)
+            ew = s * (abs(w * math.cos(th)) + abs(h * math.sin(th))) / 2
+            eh = s * (abs(w * math.sin(th)) + abs(h * math.cos(th))) / 2
+            X0, Y0 = int(math.floor(cx - ew)) - 1, int(math.floor(cy - eh)) - 1
+            X1, Y1 = int(math.ceil(cx + ew)) + 1, int(math.ceil(cy + eh)) + 1
+            M = cv2.getRotationMatrix2D((w / 2, h / 2), rot, s)
+            M[0, 2] += cx - w / 2 - X0
+            M[1, 2] += cy - h / 2 - Y0
+            M = M.astype(np.float32)
             sz = (X1 - X0, Y1 - Y0)
-            rgb = cv2.warpAffine(layer.rgb, M, sz, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+            rgb = cv2.warpAffine(src, M, sz, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
             a = cv2.warpAffine(alpha, M, sz, flags=cv2.INTER_LINEAR, borderValue=0)
         # 캔버스 경계로 자르기
         cx0, cy0 = max(X0, 0), max(Y0, 0)
@@ -269,13 +310,17 @@ class CardScene:
             kind = el.sfx
             if kind == "auto":
                 kind = {"pop": "pop", "grow": "pop_soft", "rise": "swish", "drop": "swish", "left": "swish",
-                        "right": "swish", "wipe": "tick", "wipel": "tick", "wiped": "tick"}.get(el.anim)
+                        "right": "swish", "wipe": "tick", "wipel": "tick", "wiped": "tick",
+                        "photo": "swish"}.get(el.anim)
             if kind:
                 ev.append((el.t, kind))
+            if el.anim == "photo":
+                ev.append((el.t + el.dur * 0.85, "shutter"))
             for pt in el.pulse:
                 ev.append((pt, "pop_soft"))
         ev += [(t, "marker") for t, _ in self.s.highlights]
         ev += [(t, "chime") for t, _, _ in self.s.sparks]
+        ev += list(self.s.sounds)
         return ev
 
 
@@ -391,6 +436,16 @@ def sfx(kind, rng):
             d = int(i * 0.05 * SR)
             y[d:] += np.sin(2 * np.pi * f * t[:n - d]) * np.exp(-t[:n - d] / 0.25)
         return y * 0.07
+    if kind == "shutter":
+        n = int(0.16 * SR)
+        y = np.zeros(n)
+        for d, g in [(0, 1.0), (0.055, 0.7)]:
+            L = int(0.03 * SR)
+            b = rng.standard_normal(L)
+            b = b - _lowpass(b, 3000)
+            i = int(d * SR)
+            y[i:i + L] += b * _env(L, 0.0005, 0.006) * g
+        return y * 0.5
     if kind == "whoosh":
         n = int(0.8 * SR)
         t = np.arange(n) / SR
@@ -438,7 +493,9 @@ def bgm(total):
 
 
 # ───────────────────────── 렌더 ─────────────────────────
-def render(slides, out_path, lead=0.25, music=True):
+def render(slides, out_path, lead=0.25, music=True, intro_swipe=False, outro_swipe=False):
+    """intro_swipe: 브랜드 띠가 빠져나가며 시작(이전 편에서 이어짐).
+    outro_swipe: 브랜드 띠가 화면을 덮으며 끝(다음 편으로 이어짐)."""
     scenes = [CardScene(s) for s in slides]
     starts, t = [], 0.0
     for s in slides:
@@ -455,7 +512,7 @@ def render(slides, out_path, lead=0.25, music=True):
     for f in range(nframes):
         T = f / FPS
         i = max(k for k in range(len(slides)) if starts[k] <= T)
-        lt = T - starts[i] - (lead if i > 0 else 0.1)
+        lt = T - starts[i] - (lead if i > 0 or intro_swipe else 0.1)
         sc = scenes[i]
         frame = place(sc.render_card(max(lt, 0)), sc.camera(max(lt, 0)), backdrop)
         # 전환: 경계 앞뒤 TRANS/2
@@ -463,9 +520,15 @@ def render(slides, out_path, lead=0.25, music=True):
             p = (T - (b - TRANS / 2)) / TRANS
             if 0 < p < 1:
                 frame = swipe(frame, p)
-        if T < 0.35:
+        if intro_swipe:
+            if T < TRANS / 2:
+                frame = swipe(frame, 0.5 + T / TRANS)
+        elif T < 0.35:
             frame = frame * (T / 0.35) + 255 * (1 - T / 0.35)
-        if total - T < 0.6:
+        if outro_swipe:
+            if total - T < TRANS / 2:
+                frame = swipe(frame, 0.5 - (total - T) / TRANS)
+        elif total - T < 0.6:
             k = (total - T) / 0.6
             frame = frame * k + 255 * (1 - k)
         ff.stdin.write(np.clip(frame, 0, 255).astype(np.uint8).tobytes())
@@ -478,8 +541,10 @@ def render(slides, out_path, lead=0.25, music=True):
     rng = np.random.default_rng(7)
     audio = bgm(total) if music else np.zeros(int(total * SR))
     events = [(b - TRANS / 2 + 0.05, "whoosh") for b in starts[1:]]
+    if outro_swipe:
+        events.append((total - TRANS / 2 + 0.05, "whoosh"))
     for k, sc in enumerate(scenes):
-        off = starts[k] + (lead if k > 0 else 0.1)
+        off = starts[k] + (lead if k > 0 or intro_swipe else 0.1)
         events += [(off + t, kind) for t, kind in sc.sfx_events()]
     events.sort()
     last = {}

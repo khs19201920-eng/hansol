@@ -183,5 +183,5 @@ if __name__ == "__main__":
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "ai-agent-shortform.mp4"
     only = sys.argv[2:]  # 예: 01 03 → 해당 슬라이드만 미리보기
     slides = [s for s in SLIDES if not only or Path(s.image).stem in only]
-    total = render(slides, out)
+    total = render(slides, out, outro_swipe=not only)  # 2편으로 이어지도록 띠로 덮으며 끝남
     print(f"{out} ({total:.1f}s, {len(slides)} slides)")
