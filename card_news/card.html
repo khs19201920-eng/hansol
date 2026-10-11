@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>GI Buddy 카드뉴스</title>
+<style>
+@font-face{font-family:P;src:url(Pretendard-Regular.otf);font-weight:400}
+@font-face{font-family:P;src:url(Pretendard-Medium.otf);font-weight:500}
+@font-face{font-family:P;src:url(Pretendard-SemiBold.otf);font-weight:600}
+@font-face{font-family:P;src:url(Pretendard-Bold.otf);font-weight:700}
+@font-face{font-family:P;src:url(Pretendard-ExtraBold.otf);font-weight:800}
+@font-face{font-family:P;src:url(Pretendard-Black.otf);font-weight:900}
+@font-face{font-family:Hand;src:url(caveat.woff2);font-weight:500}
+:root{
+  --pink:#D61F6E; --pink-2:#E8458B; --pink-soft:#FCE9F1;
+  --plum:#4A1652; --plum-2:#7A1F6A;
+  --navy:#1B1E3D; --text:#2B2E42; --muted:#5E6278;
+  --line:#EEE3EB; --card:#FFFFFF; --bg:#F8F3F7;
+  --t-pink:#FDEDF3; --c-pink:#C2185B;
+  --t-blue:#EAF1FB; --c-blue:#3A68AE;
+  --t-green:#EAF5EC; --c-green:#2E7A4C;
+  --t-amber:#FFF3E2; --c-amber:#C8741F;
+  --t-violet:#F1ECFA; --c-violet:#5B3FA0;
+  --radius:18px;
+  --shadow:0 1px 2px rgba(74,22,82,.04),0 6px 18px rgba(74,22,82,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{width:1280px;word-break:keep-all;font-family:P,sans-serif;color:var(--text);letter-spacing:-.2px;
+  background:radial-gradient(900px 500px at 0% 0%,#FDEFF6 0,transparent 60%),radial-gradient(700px 500px at 100% 100%,#F3ECFA 0,transparent 60%),var(--bg);
+  padding:28px}
+.grid{display:grid;grid-template-columns:820px 384px;gap:20px;align-items:stretch}
+.col{display:flex;flex-direction:column;gap:20px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
+.sec{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;color:var(--navy);margin-bottom:14px;letter-spacing:-.4px}
+.sec::before{content:"";width:4px;height:18px;border-radius:2px;background:linear-gradient(var(--pink-2),var(--pink))}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+
+/* hero */
+.hero{position:relative;height:336px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);
+  background:linear-gradient(115deg,#FFFFFF 0%,#FFF8FB 45%,#F7EEF6 100%)}
+.hero .art{position:absolute;right:0;top:0;width:382px;height:336px;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 90px);mask-image:linear-gradient(to right,transparent 0,#000 90px)}
+.hero .copy{position:absolute;left:36px;top:30px;width:400px}
+.eyebrow{display:inline-block;font-size:14px;font-weight:700;color:var(--plum);background:var(--pink-soft);border:1px solid #F7D3E3;padding:6px 12px;border-radius:999px}
+.logo{margin-top:12px;font-weight:900;font-size:80px;line-height:.95;letter-spacing:-3px;color:var(--navy);position:relative;display:inline-block}
+.logo .gi{display:inline-block;transform:skewX(-9deg);background:linear-gradient(135deg,#F0559A 0%,#D61F6E 55%,#A3124F 100%);-webkit-background-clip:text;background-clip:text;color:transparent;margin-right:14px;padding-right:4px}
+.logo::after{content:"";position:absolute;left:4px;bottom:-10px;width:150px;height:6px;border-radius:6px;background:linear-gradient(90deg,#F0559A,rgba(240,85,154,0))}
+.tagline{margin-top:26px;font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.6px}
+.lead{margin-top:10px;font-size:15px;line-height:1.6;color:var(--muted);font-weight:500}
+.keys{margin-top:16px;font-size:14px;font-weight:800;letter-spacing:2.4px;color:var(--navy)}
+.keys .k2{color:var(--pink)} .keys .dot{color:#B9A9BC;margin:0 8px;letter-spacing:0}
+.bubble{position:absolute;left:394px;top:12px;width:214px;height:144px;border-radius:22px;
+  background:linear-gradient(145deg,#F0559A 0%,#D61F6E 70%,#BD1863 100%);color:#fff;padding:18px 18px 0 20px;box-shadow:0 10px 24px rgba(214,31,110,.25)}
+.bubble::after{content:"";position:absolute;left:86px;bottom:-21px;width:0;height:0;border-left:16px solid transparent;border-right:26px solid transparent;border-top:24px solid #D41E6C;transform:skewX(-10deg)}
+.bubble b{display:block;font-size:19px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+.bubble p{font-size:13.5px;line-height:1.5;font-weight:500;opacity:.95}
+
+/* row B */
+.rowB{display:flex;flex-direction:column;gap:20px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tile{border-radius:14px;padding:18px 16px 18px;text-align:left;border:1px solid rgba(0,0,0,.03)}
+.tile .badge{margin:0 0 12px;background:#fff;width:46px;height:46px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.tile h4{font-size:16.5px;font-weight:800;color:var(--navy);margin:0 0 8px;letter-spacing:-.4px}
+.tile p{font-size:13.5px;line-height:1.65;color:var(--text);font-weight:500;letter-spacing:-.4px}
+.c-pink{background:var(--t-pink);color:var(--c-pink)} .c-blue{background:var(--t-blue);color:var(--c-blue)}
+.c-green{background:var(--t-green);color:var(--c-green)} .c-amber{background:var(--t-amber);color:var(--c-amber)}
+.c-violet{background:var(--t-violet);color:var(--c-violet)}
+.tile h4,.tile p{color:var(--navy)} .tile p{color:var(--text)}
+.rec{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rec li{list-style:none;display:flex;align-items:center;gap:12px;background:#FCFAFC;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.rec .badge{width:40px;height:40px}
+.rec span{font-size:13.5px;line-height:1.5;font-weight:500;color:var(--text);letter-spacing:-.4px}
+.rec span b{font-weight:700;color:var(--navy)}
+
+/* questions */
+.qpanel{display:flex;flex-direction:column}
+.qs{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:16px 14px}
+.q{position:relative;border-radius:16px;padding:14px 18px;font-size:14px;line-height:1.55;font-weight:600;letter-spacing:-.4px;min-height:84px;display:flex;align-items:center}
+.q::after{content:"";position:absolute;left:22px;bottom:-6px;width:12px;height:12px;background:inherit;transform:rotate(45deg);border-radius:2px}
+.q.c-pink{color:#9E1450} .q.c-blue{color:#274C86} .q.c-green{color:#22603B}
+.q.c-violet{color:#45307E} .q.c-amber{color:#9A4F12}
+.more{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:700;color:var(--pink)}
+.more .dots{display:inline-flex;gap:4px;background:var(--pink-soft);padding:7px 10px;border-radius:999px}
+.more .dots i{width:5px;height:5px;border-radius:50%;background:var(--pink)}
+
+/* right column */
+.why{display:flex;flex-direction:column;gap:10px}
+.why li{list-style:none;display:flex;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#FCFAFC}
+.why h5{font-size:15px;font-weight:800;color:var(--pink);margin-bottom:3px;letter-spacing:-.4px}
+.why p{font-size:13px;line-height:1.5;color:var(--text);font-weight:500;letter-spacing:-.4px}
+table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:13px;letter-spacing:-.4px}
+th{padding:9px 8px;font-weight:700;color:#fff;font-size:13.5px}
+th:first-child{background:#8E92A8} th:last-child{background:linear-gradient(90deg,#E23D86,#C81B66)}
+td{padding:9px 8px;text-align:center;line-height:1.4;border-top:1px solid var(--line);font-weight:500}
+td:first-child{background:#F6F7FA;color:var(--muted);width:50%}
+td:last-child{background:#FFF5F9;color:var(--pink);font-weight:700}
+.dpanel{display:flex;flex-direction:column}
+.disc{flex:1;display:flex;flex-direction:column;gap:10px}
+.disc li{flex:1;display:flex;flex-direction:column;justify-content:center}
+.disc li .lab{align-self:flex-start}
+.disc li{list-style:none;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FCFAFC}
+.disc .lab{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;margin-bottom:6px;letter-spacing:-.2px}
+.disc p{font-size:13px;line-height:1.5;color:var(--muted);font-weight:500;letter-spacing:-.4px}
+.lab.c-pink{color:#B0155E} .lab.c-amber{color:#8A5410} .lab.c-blue{color:#2D5594}
+
+/* footer */
+.foot{margin-top:20px;height:96px;border-radius:var(--radius);display:flex;align-items:center;padding:0 22px 0 36px;color:#fff;
+  background:radial-gradient(300px 140px at 92% 0%,rgba(255,150,200,.35),transparent 70%),linear-gradient(100deg,#3E1247 0%,#6A1A62 45%,#B21D68 100%);box-shadow:var(--shadow)}
+.foot .hand{font-family:Hand,cursive;font-size:25px;line-height:1.05;opacity:.9;transform:rotate(-4deg);width:250px}
+.foot .hand span{display:block;padding-left:22px}
+.foot .vr{width:1px;height:48px;background:rgba(255,255,255,.3);margin:0 32px}
+.foot .msg{font-size:19px;line-height:1.45;font-weight:500;letter-spacing:-.4px;flex:1}
+.foot .msg b{font-weight:800}
+.cta{display:flex;align-items:center;gap:14px;background:#fff;color:var(--pink);font-weight:800;font-size:18px;padding:8px 8px 8px 26px;border-radius:999px;box-shadow:0 6px 18px rgba(30,0,30,.25);letter-spacing:-.4px}
+.cta .go{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#E23D86,#A3124F);color:#fff}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="bottle" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="13" rx="2.5"/><rect x="5" y="3.5" width="14" height="4.5" rx="1.2"/><path d="M9 13h6M9 16.5h6"/></symbol>
+  <symbol id="bars" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><rect x="5" y="13" width="3.2" height="5.5" rx=".6"/><rect x="10.4" y="9" width="3.2" height="9.5" rx=".6"/><rect x="15.8" y="5" width="3.2" height="13.5" rx=".6"/></symbol>
+  <symbol id="doc" viewBox="0 0 24 24"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 3v5h5M8.5 12.5h7M8.5 16h7"/></symbol>
+  <symbol id="bulb" viewBox="0 0 24 24"><path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.1v.1h5v-.1c0-.8.4-1.5 1.1-2.1A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.2"/></symbol>
+  <symbol id="book" viewBox="0 0 24 24"><path d="M3 5.5c2.5-1.2 5.5-1.2 9 1 3.5-2.2 6.5-2.2 9-1V19c-2.5-1.2-5.5-1.2-9 1-3.5-2.2-6.5-2.2-9-1z"/><path d="M12 6.5V20"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.8 14.2a4.8 4.8 0 0 1 5.2 5"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="cap" viewBox="0 0 24 24"><path d="M2.5 9.5 12 5l9.5 4.5L12 14z"/><path d="M6.5 11.5v4.2c1.6 1.4 3.6 2.1 5.5 2.1s3.9-.7 5.5-2.1v-4.2M21.5 9.5v5"/></symbol>
+  <symbol id="loop" viewBox="0 0 24 24"><path d="M19.5 10.5A7.5 7.5 0 0 0 6 6.8L4.5 8.5"/><path d="M4.5 4v4.5H9"/><path d="M4.5 13.5A7.5 7.5 0 0 0 18 17.2l1.5-1.7"/><path d="M19.5 20v-4.5H15"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="grid">
+  <div class="col">
+    <section class="hero">
+      <img class="art" src="hero.png" alt="">
+      <div class="bubble"><b>무엇이든 물어보세요!</b><p>GI Oncology와 관련된<br>다양한 정보를 탐색하고<br>학습할 수 있습니다.</p></div>
+      <div class="copy">
+        <span class="eyebrow">GI Oncology 전용 AI Agent</span><br>
+        <div class="logo"><span class="gi">GI</span>Buddy</div>
+        <div class="tagline">더 깊은 대화를, 더 큰 가능성으로</div>
+        <p class="lead">찾는 시간은 줄이고, 배우는 속도는 높이고,<br>HCP와의 대화는 더 자신 있게 준비해 보세요.</p>
+        <div class="keys">ASK<span class="dot">·</span><span class="k2">LEARN</span><span class="dot">·</span>PREPARE<span class="dot">·</span><span class="k2">ENGAGE</span></div>
+      </div>
+    </section>
+
+    <div class="rowB">
+      <section class="panel">
+        <h3 class="sec">주요 활용 영역</h3>
+        <div class="tiles">
+          <div class="tile c-pink"><div class="badge" style="color:var(--c-pink)"><svg class="i"><use href="#bottle"/></svg></div><h4>제품</h4><p>임핀지(IMFINZI)<br>이뮤도(IMJUDO)</p></div>
+          <div class="tile c-blue"><div class="badge" style="color:var(--c-blue)"><svg class="i"><use href="#bars"/></svg></div><h4>주요 임상 연구</h4><p>HIMALAYA<br>TOPAZ-1<br>MATTERHORN</p></div>
+          <div class="tile c-green"><div class="badge" style="color:var(--c-green)"><svg class="i"><use href="#doc"/></svg></div><h4>질환 정보</h4><p>간세포암(HCC)<br>담도암(BTC)<br>위암/위식도접합부암</p></div>
+          <div class="tile c-amber"><div class="badge" style="color:var(--c-amber)"><svg class="i"><use href="#bulb"/></svg></div><h4>업무 지원</h4><p>허가사항<br>승인 자료<br>최신 논문<br>Master Slide 등</p></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h3 class="sec">이런 분들께 추천합니다</h3>
+        <ul class="rec">
+          <li><div class="badge c-pink"><svg class="i"><use href="#target"/></svg></div><span><b>HCP 방문 전</b><br>빠른 정보 탐색이 필요한 분</span></li>
+          <li><div class="badge c-blue"><svg class="i"><use href="#book"/></svg></div><span><b>Onboarding 및</b><br>Self-study가 필요한 분</span></li>
+          <li><div class="badge c-violet"><svg class="i"><use href="#users"/></svg></div><span><b>과학적 커뮤니케이션을</b><br>더 자신 있게 준비하고 싶은 분</span></li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="panel qpanel" style="flex:1">
+      <h3 class="sec">이런 질문도 가능합니다</h3>
+      <div class="qs">
+        <div class="q c-pink">“신입 MR이라고 생각하고<br>HIMALAYA를 처음부터 가르쳐줘.”</div>
+        <div class="q c-blue">“임핀지의 대한민국<br>허가사항을 정리해 줘.”</div>
+        <div class="q c-green">“TOPAZ-1의 DOT 증대를 위한<br>insight gathering용 질문지를<br>10개 구성해줘.”</div>
+        <div class="q c-violet">“Efficacy 측면에서 경쟁품만 쓰는<br>고객에게 STRIDE regimen을<br>고려하게 하려면 어떻게 할까?”</div>
+        <div class="q c-amber">“의료진이 MATTERHORN에 대해<br>할 수 있는 어려운 질문 10개<br>만들어줘.”</div>
+        <div class="q c-blue">“TOPAZ-1 논문을 읽은 경쟁사 MR이<br>우리에게 할 법한 공격적인 질문<br>10개 만들어줘.”</div>
+      </div>
+      <div class="more"><span class="dots"><i></i><i></i><i></i></span>더 많은 질문으로 궁금증을 해결해 보세요!</div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel">
+      <h3 class="sec">GI Buddy를 써야 하는 이유</h3>
+      <ul class="why">
+        <li><div class="badge c-pink"><svg class="i"><use href="#clock"/></svg></div><div><h5>업무 효율성 향상</h5><p>필요한 정보를 빠르게 찾아<br>자료 탐색에 드는 시간을 줄입니다.</p></div></li>
+        <li><div class="badge c-violet"><svg class="i"><use href="#cap"/></svg></div><div><h5>학습 속도 향상</h5><p>질환, 제품, 주요 임상 연구를<br>필요한 수준에 맞춰 학습합니다.</p></div></li>
+        <li><div class="badge c-pink"><svg class="i"><use href="#users"/></svg></div><div><h5>고객 준비에 더 집중</h5><p>핵심 메시지와 데이터를 정리해<br>HCP와의 대화를 준비합니다.</p></div></li>
+        <li><div class="badge c-violet"><svg class="i"><use href="#loop"/></svg></div><div><h5>언제든 반복 질문 가능</h5><p>궁금한 내용을 다시 묻고<br>다양한 방식으로 설명받을 수 있습니다.</p></div></li>
+      </ul>
+    </section>
+    <section class="panel">
+      <h3 class="sec">GI Buddy만의 차별점</h3>
+      <table>
+        <tr><th>일반 AI</th><th>GI Buddy</th></tr>
+        <tr><td>출처 불명확 가능</td><td>승인된 내부 자료 기반</td></tr>
+        <tr><td>최신 승인자료<br>확인 어려움</td><td>Master Slide 활용</td></tr>
+        <tr><td>허가사항 불일치 가능</td><td>한국 허가사항 기반</td></tr>
+        <tr><td>일반 의학정보 중심</td><td>GI Oncology 특화</td></tr>
+      </table>
+    </section>
+    <section class="panel dpanel" style="flex:1">
+      <h3 class="sec">꼭 확인해주세요!</h3>
+      <ul class="disc">
+        <li><span class="lab c-pink">일반 AI Disclaimer</span><p>답변은 학습 및 정보 탐색 지원용 참고자료이며, 최종 사용 전 확인이 필요합니다.</p></li>
+        <li><span class="lab c-amber">Off-label Disclaimer</span><p>국내 허가사항 외 문의는 제한될 수 있으며 문의 시 공식 채널을 이용해 주세요.</p></li>
+        <li><span class="lab c-blue">AE / PQC Disclaimer</span><p>AE 및 PQC 관련 내용은 공식 보고 절차를 이용해 주세요.</p></li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<footer class="foot">
+  <div class="hand">From Knowledge<span>to a Healthier Tomorrow</span></div>
+  <div class="vr"></div>
+  <div class="msg"><b>GI Buddy</b>와 함께,<br>더 나은 내일의 가능성을 만들어 갑니다.</div>
+  <div class="cta">지금, GI Buddy에게 물어보세요!<span class="go"><svg class="i" style="width:22px;height:22px;stroke-width:2.4"><use href="#chev"/></svg></span></div>
+</footer>
+</body>
+</html>
