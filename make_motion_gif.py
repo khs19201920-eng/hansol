@@ -1,10 +1,11 @@
-import numpy as np, math, os, subprocess, shutil, sys
+import numpy as np, math
+import scipy.ndimage as ndi, os, subprocess, shutil, sys
 from PIL import Image, ImageDraw, ImageFilter
 SRC=sys.argv[1] if len(sys.argv)>1 else 'GI_Buddy_edited.png'
 OUT=sys.argv[2] if len(sys.argv)>2 else '.'
 base=Image.open(SRC).convert('RGB'); B=np.array(base).astype(np.float32)
 H,W=B.shape[:2]
-N=72; FPS=20
+N=100; FPS=20
 
 def smooth(t): return t*t*(3-2*t)
 def window(f,a,b): return None if f<a or f>b else (f-a)/(b-a)
@@ -48,18 +49,6 @@ bub=Pop(bbox,shape_mask(bbox,pink,6,17),(590,160))
 # logo "GI Buddy" (whole word block)
 lbox=(32,232,400,334)
 logo=Pop(lbox,shape_mask(lbox,lambda s:s.mean(2)<170,8,13),(216,300),pad=30)
-# right column icon circles
-circles=[]
-for cy in (150,258,370,478):
-    cx=873; r=42; box=(cx-r,cy-r,cx+r,cy+r)
-    m=Image.new('L',(2*r,2*r),0); ImageDraw.Draw(m).ellipse((1,1,2*r-2,2*r-2),fill=255)
-    circles.append(Pop(box,m,(cx,cy),pad=14))
-# tile icons
-tiles=[]
-for (x0,x1,y0,y1) in [(95,148,653,703),(268,331,652,700),(458,514,652,697),(646,691,649,703)]:
-    box=(x0-6,y0-6,x1+6,y1+6)
-    cond=lambda s:((s.max(2)-s.min(2))>70)|(s.mean(2)<120)
-    tiles.append(Pop(box,shape_mask(box,cond,10,9),((x0+x1)//2,y1+4),pad=16))
 # CTA button
 cbox=(946,1167,1235,1228)
 cm=Image.new('L',(cbox[2]-cbox[0],cbox[3]-cbox[1]),0)
@@ -141,45 +130,88 @@ PINK=(255,120,190); WHITE=(255,255,255)
 sparks=[  # x,y,size,start,dur,color
  (402,236,13,6,14,PINK),(30,240,10,14,12,WHITE),(150,236,9,22,12,PINK),
  (470,40,12,2,12,PINK),(700,110,10,10,12,PINK),(450,170,9,40,12,PINK),
- (770,215,11,30,14,PINK),(610,300,8,50,12,WHITE),
- (360,180,9,56,12,PINK),(1238,1165,12,50,14,WHITE),(950,1235,10,60,11,WHITE),
- (1225,96,9,26,12,PINK),(800,600,9,64,8,PINK),
+ (770,215,11,30,14,PINK),(610,300,8,46,12,WHITE),
+ (360,180,9,36,12,PINK),(1238,1165,12,40,14,WHITE),(950,1235,10,44,11,WHITE),
+ (1225,96,9,26,12,PINK),(800,600,9,12,8,PINK),
 ]
+
+
+# ---------- text fade: per-box background estimate (text removed) + text mask ----------
+GROUPS=[
+ [((40,20,410,165),'dark')],
+ [((888,45,1185,88),'dark'),((928,106,1212,194),'dark')],
+ [((35,338,415,378),'dark'),((35,386,395,412),'dark'),((928,216,1212,304),'dark')],
+ [((120,460,520,562),'dark'),((928,326,1212,414),'dark')],
+ [((928,436,1212,527),'dark'),((120,583,285,622),'dark')],
+ [((45,710,207,822),'dark'),((223,710,388,842),'dark'),((403,710,572,842),'dark'),((588,710,756,862),'dark')],
+ [((888,583,1125,624),'dark'),((815,672,1222,852),'dark')],
+ [((110,893,362,933),'dark'),((40,953,297,1007),'dark'),((312,948,497,1002),'dark'),((515,938,757,1012),'dark')],
+ [((40,1028,270,1107),'dark'),((282,1028,502,1102),'dark'),((515,1028,757,1102),'dark'),((233,1113,507,1142),'dark')],
+ [((885,878,1062,918),'dark'),((808,978,1230,1074),'dark')],
+ [((455,1163,772,1228),'light'),((45,1168,302,1238),'light')],
+]
+textdata=[]
+for g in GROUPS:
+    items=[]
+    for (x0,y0,x1,y1),mode in g:
+        P=8; X0,Y0,X1,Y1=max(0,x0-P),max(0,y0-P),min(W,x1+P),min(H,y1+P)
+        o=B[Y0:Y1,X0:X1]; lum=o.mean(2)
+        if mode=='dark':
+            ref=ndi.maximum_filter(lum,size=11); tm=lum<ref-12
+        else:
+            ref=ndi.minimum_filter(lum,size=11); tm=lum>ref+12
+        tm=ndi.binary_dilation(tm,iterations=2)
+        keep=(~tm).astype(np.float32)
+        bg=o.copy(); filled=np.zeros(tm.shape,bool)
+        for sig in (3,6,12,24,48,96):   # normalized convolution, coarse fills what fine can't
+            w=ndi.gaussian_filter(keep,sig)
+            est=np.stack([ndi.gaussian_filter(o[...,c]*keep,sig) for c in range(3)],2)/np.maximum(w,1e-4)[...,None]
+            fill=(w>(0.15 if sig<24 else 1e-3))[...,None]&tm[...,None]&~filled[...,None]
+            bg=np.where(fill,est,bg); filled|=fill[...,0]
+        bg=np.where(tm[...,None],bg,o)
+        m=ndi.gaussian_filter(tm.astype(np.float32),0.7)[...,None]
+        sx,sy=x0-X0,y0-Y0; ex,ey=sx+(x1-x0),sy+(y1-y0)
+        items.append((x0,y0,x1,y1,(o-bg)[sy:ey,sx:ex]*m[sy:ey,sx:ex]))
+    textdata.append(items)
+def text_alpha(fa,gi,t):
+    if t>=1: return
+    for (x0,y0,x1,y1,delta) in textdata[gi]:
+        fa[y0:y1,x0:x1]-=delta*(1-t)
+FADE_OUT=(60,66); FIN0=70; FSTEP=2; FLEN=7
 
 frames=[]
 for f in range(N):
     fa=B.copy()
-    # 1 bubble elastic pop + wobble (twice per loop)
-    for st in (0,36):
+    # 1 bubble elastic pop + wobble
+    for st in (0,30):
         p=window(f,st,st+16)
         if p is not None:
             bub.apply(fa,1+elastic(p,0.16),ang=6*math.sin(p*math.pi*3)*math.exp(-3*p))
             dashes(fa,0.5+0.5*math.cos(2*math.pi*p*2))
-    # 2 logo pulse + strong shine
-    p=window(f,10,26)
+    # 2 logo shine
+    p=window(f,6,22)
     if p is not None: shine(fa,(30,228,404,338),smooth(p),0.85,16,0.5,logomask)
     # 3 eyes: double blink
-    sy={28:0.4,29:0.1,30:0.5,31:1,32:0.4,33:0.1,34:0.5}.get(f)
-    if sy and sy<1: blink(fa,sy)
-    # 4 right-column icon circles: sequential pop
-    for i,c in enumerate(circles):
-        p=window(f,18+i*6,18+i*6+14)
-        if p is not None: c.apply(fa,1+elastic(p,0.22),ang=10*math.sin(p*math.pi*2)*math.exp(-3*p))
-    # 5 tile icons hop
-    for i,tl in enumerate(tiles):
-        p=window(f,40+i*5,40+i*5+12)
-        if p is not None: tl.apply(fa,1+elastic(p,0.25))
-    # 6 CTA heartbeat + glow + shine
-    for st in (44,54):
+    sy={22:0.4,23:0.1,24:0.5,26:0.4,27:0.1,28:0.5}.get(f)
+    if sy: blink(fa,sy)
+    # 4 CTA heartbeat + glow + shine
+    for st in (34,44):
         p=window(f,st,st+8)
         if p is not None: cta.apply(fa,1+0.07*math.sin(math.pi*p))
-    p=window(f,42,71)
+    p=window(f,32,58)
     if p is not None:
         glow(fa,0.75*math.sin(math.pi*p))
-        shine(fa,cbox,smooth(window(f,46,66) or 0) if 46<=f<=66 else -1,0.55,14,-0.6,ctamask) if 46<=f<=66 else None
-    # 7 sparkles
-    for (x,y,s,st,du,col) in sparks:
-        sparkle(fa,x,y,s,window(f,st,st+du),col)
+        if 36<=f<=54: shine(fa,cbox,smooth(window(f,36,54)),0.55,14,-0.6,ctamask)
+    # 5 text: fade out together, then staggered fade-in
+    for gi in range(len(GROUPS)):
+        if f<FADE_OUT[0]: t=1
+        elif f<=FADE_OUT[1]: t=1-smooth((f-FADE_OUT[0])/(FADE_OUT[1]-FADE_OUT[0]))
+        else:
+            st=FIN0+gi*FSTEP; t=0 if f<st else min(1,smooth((f-st)/FLEN))
+        text_alpha(fa,gi,t)
+    # 6 sparkles
+    for (x,y,s_,st,du,col) in sparks:
+        sparkle(fa,x,y,s_,window(f,st,st+du),col)
     frames.append(np.clip(fa+0.5,0,255).astype(np.uint8))
 
 tmp='frames'; shutil.rmtree(tmp,ignore_errors=True); os.makedirs(tmp)
@@ -188,7 +220,7 @@ def enc(width,out):
     sc=f'scale={width}:-1:flags=lanczos,' if width!=W else ''
     pal=f'{tmp}/pal.png'
     subprocess.run(['ffmpeg','-v','error','-y','-framerate',str(FPS),'-i',f'{tmp}/%03d.png','-vf',sc+'palettegen=max_colors=256:stats_mode=full',pal],check=True)
-    subprocess.run(['ffmpeg','-v','error','-y','-framerate',str(FPS),'-i',f'{tmp}/%03d.png','-i',pal,'-lavfi',sc+'paletteuse=dither=sierra2_4a:diff_mode=rectangle','-loop','0',out],check=True)
+    subprocess.run(['ffmpeg','-v','error','-y','-framerate',str(FPS),'-i',f'{tmp}/%03d.png','-i',pal,'-lavfi',(sc[:-1]+'[x];[x][1:v]' if sc else '')+'paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle','-loop','0',out],check=True)
     print(out,os.path.getsize(out)//1024,'KB')
 enc(W,os.path.join(OUT,'GI_Buddy_motion.gif'))
 enc(752,os.path.join(OUT,'GI_Buddy_motion_email.gif'))
