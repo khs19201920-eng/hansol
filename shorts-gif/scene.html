@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:P;src:url(fonts/Pretendard-Medium.woff2);font-weight:500}
+@font-face{font-family:P;src:url(fonts/Pretendard-SemiBold.woff2);font-weight:600}
+@font-face{font-family:P;src:url(fonts/Pretendard-Bold.woff2);font-weight:700}
+@font-face{font-family:P;src:url(fonts/Pretendard-ExtraBold.woff2);font-weight:800}
+@font-face{font-family:P;src:url(fonts/Pretendard-Black.woff2);font-weight:900}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:640px;height:480px;overflow:hidden;background:#120f33}
+body{font-family:P,sans-serif;color:#fff;letter-spacing:-0.02em}
+#stage{position:relative;width:640px;height:480px;overflow:hidden;
+  background:
+   radial-gradient(420px 300px at 85% 10%,rgba(124,92,255,.45),transparent 70%),
+   radial-gradient(380px 300px at 5% 95%,rgba(59,130,246,.38),transparent 70%),
+   linear-gradient(160deg,#1b1650 0%,#120f33 55%,#1a0f3d 100%)}
+.abs{position:absolute}
+.scene{position:absolute;inset:0;opacity:0}
+.grad{background:linear-gradient(90deg,#8fb0ff,#c79bff 50%,#ff8fd0);-webkit-background-clip:text;background-clip:text;color:transparent}
+svg.ic{fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spark{position:absolute;width:18px;height:18px}
+.spark path{fill:#fff}
+/* top logo */
+#logo{left:22px;top:16px;font-weight:800;font-size:17px;display:flex;align-items:center;gap:5px}
+#logo small{display:block;font-size:8.5px;font-weight:600;opacity:.6;letter-spacing:.08em}
+/* story bar */
+#bar{left:22px;right:22px;top:16px;height:4px;display:flex;gap:6px}
+#bar div{flex:1;background:rgba(255,255,255,.18);border-radius:3px;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:#fff;border-radius:3px}
+/* intro */
+.big{font-weight:900}
+/* steps */
+.ring{position:absolute;left:62px;top:150px;width:170px;height:170px}
+.badge{position:absolute;left:87px;top:175px;width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.num{position:absolute;left:40px;top:62px;font-size:110px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.25)}
+.right{position:absolute;left:268px;top:92px;width:350px}
+.lab{font-size:15px;font-weight:800;letter-spacing:.06em}
+.ttl{font-size:42px;font-weight:900;margin-top:4px;line-height:1.15}
+.sub{font-size:16px;font-weight:500;opacity:.78;margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{padding:9px 13px;border-radius:12px;font-size:14px;font-weight:700;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chip b{width:8px;height:8px;border-radius:50%;display:inline-block}
+.arrow{align-self:center;font-weight:800;opacity:.7}
+.bubble{margin-top:14px;padding:10px 14px;border-radius:14px;font-size:14.5px;font-weight:700;background:#fff;color:#2a1d6e;display:inline-block}
+.check{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;margin-top:8px}
+.check .bx{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center}
+.tip{margin-top:16px;font-size:13.5px;font-weight:600;opacity:.85;display:flex;gap:8px;align-items:center}
+.tip span{background:#ffd54a;color:#3b2a00;font-weight:900;font-size:11px;padding:3px 7px;border-radius:7px}
+/* stats */
+.statnum{font-size:92px;font-weight:900;line-height:1}
+/* summary */
+.step5{position:absolute;top:196px;width:96px;text-align:center}
+.step5 .c{width:68px;height:68px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.step5 .n{position:absolute;right:-4px;top:-4px;width:22px;height:22px;border-radius:50%;background:#fff;color:#2a1d6e;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.step5 p{margin-top:9px;font-size:14px;font-weight:700}
+#cta{left:50%;top:330px;transform:translateX(-50%);white-space:nowrap;padding:14px 26px;border-radius:40px;font-size:18px;font-weight:800;background:linear-gradient(90deg,#5b7cff,#a35bff 55%,#ff5fb5);box-shadow:0 8px 30px rgba(163,91,255,.45)}
+.foot{left:0;right:0;text-align:center;font-size:13px;font-weight:600;opacity:.7}
+</style></head>
+<body><div id="stage">
+
+<!-- shared sparkles -->
+<div id="sparks"></div>
+
+<!-- ========== SUMMARY ========== -->
+<div class="scene" id="sum">
+  <div class="abs" id="logo">AI Genius <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#7aa2ff" d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg></div>
+  <div class="abs" id="s_h1" style="left:0;right:0;top:62px;text-align:center;font-size:21px;font-weight:700;opacity:.85">AI와 함께 만드는</div>
+  <div class="abs big" id="s_h2" style="left:0;right:0;top:92px;text-align:center;font-size:52px;line-height:1.1"><span class="grad">숏폼 제작 5단계</span></div>
+  <svg class="abs" id="s_line" style="left:80px;top:229px" width="480" height="4"><line x1="0" y1="2" x2="480" y2="2" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="4 6"/></svg>
+  <div id="s_steps"></div>
+  <div class="abs" id="cta">지금 바로 첫 번째 숏폼에 도전해 보세요! →</div>
+  <div class="abs foot" id="s_foot" style="top:418px">AI Genius Library · 함께 만들어가는 숏폼 · AI Genius 숏폼팀이 함께합니다</div>
+</div>
+
+<!-- ========== INTRO ========== -->
+<div class="scene" id="intro">
+  <div class="abs" id="i_play" style="left:270px;top:60px;width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#5b7cff,#c05bff);display:flex;align-items:center;justify-content:center;box-shadow:0 0 50px rgba(160,100,255,.6)">
+    <svg width="40" height="40" viewBox="0 0 24 24"><path fill="#fff" d="M8 5v14l11-7z"/></svg></div>
+  <div class="abs" id="i_ring" style="left:270px;top:60px;width:100px;height:100px;border-radius:50%;border:3px solid #c79bff"></div>
+  <div class="abs big" id="i_1" style="left:0;right:0;top:188px;text-align:center;font-size:34px">짧지만,</div>
+  <div class="abs big" id="i_2" style="left:0;right:0;top:232px;text-align:center;font-size:34px">더 큰 변화를 만드는</div>
+  <div class="abs big" id="i_3" style="left:0;right:0;top:288px;text-align:center;font-size:58px"><span class="grad">AI Genius Shorts</span></div>
+</div>
+
+<!-- ========== STEPS ========== -->
+<div class="abs" id="bar" style="opacity:0"><div><i></i></div><div><i></i></div><div><i></i></div><div><i></i></div><div><i></i></div></div>
+<div id="steps"></div>
+
+<!-- ========== STATS ========== -->
+<div class="scene" id="stats">
+  <div class="abs" id="t_lab" style="left:0;right:0;top:70px;text-align:center;font-size:20px;font-weight:800;display:flex;justify-content:center;align-items:center;gap:8px">
+    <svg width="26" height="26" viewBox="0 0 24 24" class="ic"><path d="M12 2l9 5-9 5-9-5z"/><path d="M3 7v10l9 5 9-5V7"/><path d="M12 12v10"/></svg>AI Genius Library</div>
+  <div class="abs" id="t_a" style="left:90px;top:140px;width:160px;text-align:center"><div class="statnum" style="opacity:.55">6</div><div style="font-size:16px;font-weight:700;opacity:.6;margin-top:6px">현재</div></div>
+  <div class="abs" id="t_arr" style="left:262px;top:165px;font-size:48px;font-weight:900;opacity:.8">→</div>
+  <div class="abs" id="t_b" style="left:330px;top:140px;width:230px;text-align:center"><div class="statnum grad" id="t_cnt">6</div><div style="font-size:16px;font-weight:700;margin-top:6px">목표 (편)</div></div>
+  <div class="abs" style="left:90px;right:90px;top:290px;height:12px;border-radius:8px;background:rgba(255,255,255,.14);overflow:hidden"><div id="t_fill" style="height:100%;width:18%;background:linear-gradient(90deg,#5b7cff,#c05bff,#ff5fb5);border-radius:8px"></div></div>
+  <div class="abs" id="t_txt" style="left:0;right:0;top:330px;text-align:center;font-size:19px;font-weight:700">모든 TFT 구성원, <span style="color:#ffd54a">최소 1편</span> 숏폼 참여가 목표!</div>
+</div>
+
+</div>
+<script>
+const W=640,H=480;
+const ICONS={
+ bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
+ pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/>',
+ video:'<rect x="2" y="6" width="14" height="12" rx="2.5"/><path d="M16 10.5l6-3.5v10l-6-3.5z"/>',
+ cut:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/>',
+ up:'<path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9"/><path d="M12 12v8M9 15l3-3 3 3"/>'
+};
+const ic=(k,s)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24">${ICONS[k]}</svg>`;
+const STEPS=[
+ {c:'#5b8cff',c2:'#3b5bdb',icon:'bulb',t:'아이디어 선정',s:'어떤 숏폼을 만들지 결정합니다.',
+  body:`<div class="chips"><div class="chip k"><b style="background:#7aa2ff"></b>AI Adoption Level</div><div class="chip k"><b style="background:#c79bff"></b>Use Case Sharing</div><div class="chip k"><b style="background:#5eead4"></b>Degreed Campaign</div></div>
+  <div class="tip k"><span>TIP!</span>동료들이 자주 궁금해하는 ‘하나의 질문’에서 시작</div>`},
+ {c:'#a06bff',c2:'#6d3fd6',icon:'pen',t:'스크립트 작성',s:'전달하고 싶은 내용을 간단하게 구성합니다.',
+  body:`<div class="chips" style="gap:6px"><div class="chip k">Question</div><span class="arrow k">›</span><div class="chip k">Solution</div><span class="arrow k">›</span><div class="chip k">Demo</div><span class="arrow k">›</span><div class="chip k" style="background:#a06bff;border-color:#a06bff">CTA</div></div>
+  <div class="bubble k">“Copilot Work IQ, 사용해보셨나요?”</div>`},
+ {c:'#22c5b0',c2:'#0e8f80',icon:'video',t:'콘텐츠 생성',s:'본격적으로 숏폼을 제작합니다.',
+  body:`<div class="chips"><div class="chip k"><svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>화면 녹화</div><span class="arrow k" style="font-size:13px">또는</span><div class="chip k" style="background:rgba(34,197,176,.25);border-color:#22c5b0">✦ AI 영상 생성</div></div>
+  <div class="chips" style="margin-top:12px;gap:6px"><div class="chip k">ChatGPT</div><div class="chip k">Claude</div><div class="chip k">Google Flow</div><div class="chip k">Higgsfield</div></div>`},
+ {c:'#ff8a3d',c2:'#e0591a',icon:'cut',t:'편집',s:'시청하기 쉽도록 다듬습니다.',
+  body:`<div style="margin-top:14px">${['핵심 자막 추가','불필요한 구간 제거','음량 및 화면 품질 확인','마무리 메시지 삽입'].map(x=>`<div class="check k"><span class="bx"><svg width="12" height="12" viewBox="0 0 24 24" style="opacity:0" class="tick"><path d="M4 12l5 5L20 6" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${x}</div>`).join('')}</div>`},
+ {c:'#ff5fb5',c2:'#d63384',icon:'up',t:'공유 및 확산',s:'완성된 숏폼을 AI Genius Library에 공유합니다.',
+  body:`<div class="chips"><div class="chip k" style="font-size:15px"><svg class="ic" width="17" height="17" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5z"/><path d="M3 7v10l9 5 9-5V7"/></svg>AI Genius Library</div></div>
+  <div class="tip k" style="font-size:15px;line-height:1.45;display:block">여러분의 경험이 누군가에게는<br><b style="color:#ffb3dc">최고의 AI 활용 팁</b>이 됩니다!</div>`}
+];
+const stepsEl=document.getElementById('steps');
+STEPS.forEach((d,i)=>{
+ stepsEl.insertAdjacentHTML('beforeend',`<div class="scene" id="st${i}">
+  <div class="num">0${i+1}</div>
+  <svg class="ring" viewBox="0 0 170 170"><circle cx="85" cy="85" r="80" fill="none" stroke="${d.c}" stroke-width="3" stroke-dasharray="14 10" opacity=".8"/></svg>
+  <div class="abs burst" style="left:62px;top:150px;width:170px;height:170px;border-radius:50%;border:4px solid ${d.c}"></div>
+  <div class="badge" style="background:linear-gradient(135deg,${d.c},${d.c2});box-shadow:0 0 45px ${d.c}99">${ic(d.icon,56)}</div>
+  <div class="right"><div class="lab k" style="color:${d.c}">STEP ${i+1}</div><div class="ttl k">${d.t}</div><div class="sub k">${d.s}</div>${d.body}</div>
+ </div>`);
+});
+const ss=document.getElementById('s_steps');
+['아이디어','스크립트','콘텐츠 생성','편집','공유·확산'].forEach((n,i)=>{
+ ss.insertAdjacentHTML('beforeend',`<div class="step5" style="left:${32+i*116}px"><div class="c" style="background:linear-gradient(135deg,${STEPS[i].c},${STEPS[i].c2});box-shadow:0 0 24px ${STEPS[i].c}88">${ic(STEPS[i].icon,32)}<span class="n">${i+1}</span></div><p>${n}</p></div>`);
+});
+// sparkles
+const SP=[[40,90,1],[598,70,.8],[560,400,1.1],[70,380,.7],[320,22,.6],[600,250,.7],[30,240,.6],[470,140,.5],[180,450,.6]];
+const spEl=document.getElementById('sparks');
+SP.forEach(([x,y,s],i)=>spEl.insertAdjacentHTML('beforeend',`<svg class="spark" style="left:${x}px;top:${y}px" viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z"/></svg>`));
+
+// ---------- timing helpers ----------
+const cl=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const k=(t,a,d)=>cl((t-a)/d);
+const oc=x=>1-Math.pow(1-x,3), ic3=x=>x*x*x;
+const ob=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const $=s=>document.querySelector(s);
+function S(el,{o=1,x=0,y=0,s=1,r=0,b=0}={}){
+ if(!el)return; el.style.opacity=o;
+ const base=el.dataset.base||''; el.style.transform=`${base} translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`;
+ el.style.filter=b>0.05?`blur(${b}px)`:'none';
+}
+$('#cta').dataset.base='translateX(-50%)';
+// pop-in: returns style for element appearing at time a
+const pop=(t,a,d=.45,dy=24)=>{const p=k(t,a,d);return{o:oc(Math.min(1,p*1.6)),y:(1-oc(p))*dy,s:.85+.15*ob(p)}};
+
+// ---------- TIMELINE (seconds) ----------
+const T_SUM_OUT=1.2, T_INTRO=1.5, T_STEP0=3.9, STEP_D=2.1, T_STATS=T_STEP0+5*STEP_D, T_SUM_IN=T_STATS+2.5, TOTAL=T_SUM_IN+2.6;
+window.TOTAL=TOTAL;
+
+function renderSummary(t,built){ // built: 0..? time since build start (Infinity => fully built)
+ const el=$('#sum');
+ S($('#logo'),pop(built,0,.4,-10));
+ S($('#s_h1'),pop(built,.05,.4));
+ S($('#s_h2'),pop(built,.15,.5,30));
+ const lp=oc(k(built,.4,.7)); $('#s_line').style.clipPath=`inset(0 ${100-lp*100}% 0 0)`;
+ document.querySelectorAll('.step5').forEach((e,i)=>S(e,pop(built,.35+i*.11,.45,30)));
+ const cp=pop(built,1.0,.5,20); S($('#cta'),cp);
+ S($('#s_foot'),pop(built,1.2,.4,10));
+ // CTA shimmer pulse while holding
+ if(built>1.6){const ph=((t)%1.3)/1.3; $('#cta').style.boxShadow=`0 8px ${30+20*Math.sin(ph*Math.PI*2)}px rgba(163,91,255,.6)`;}
+}
+
+function render(t){
+ // summary: visible at start (fully built), fades out, then rebuilds at end
+ const sum=$('#sum');
+ if(t<T_INTRO){
+  const p=k(t,T_SUM_OUT,.3);
+  sum.style.opacity=1-p; sum.style.transform=`scale(${1+.08*ic3(p)})`; sum.style.filter=p>0?`blur(${p*6}px)`:'none';
+  renderSummary(t,99);
+ } else if(t>=T_SUM_IN){
+  sum.style.opacity=1; sum.style.transform='none'; sum.style.filter='none';
+  renderSummary(t,t-T_SUM_IN);
+ } else sum.style.opacity=0;
+
+ // intro
+ const intro=$('#intro');
+ const iIn=t>=T_INTRO && t<T_STEP0;
+ intro.style.opacity=iIn?1:0;
+ if(iIn){
+  const lt=t-T_INTRO, out=k(t,T_STEP0-.3,.3);
+  const pp=k(lt,0,.5);
+  S($('#i_play'),{o:oc(pp)*(1-out),s:(.3+.7*ob(pp))*(1+.06*Math.sin(lt*7)*(lt>.5)),y:-out*40});
+  const rp=((lt)%0.9)/0.9; S($('#i_ring'),{o:lt>.3?(1-rp)*.9*(1-out):0,s:1+rp*.9});
+  [['#i_1',.35],['#i_2',.6],['#i_3',.95]].forEach(([s,a],j)=>{
+   const p=pop(lt,a,.5,30); p.y-=out*60; p.o*=(1-out); p.b=out*5+(1-k(lt,a,.25))*6; if(j==2)p.s=.7+.3*ob(k(lt,a,.55)); S($(s),p);
+  });
+ }
+
+ // steps
+ const bar=$('#bar'); const inSteps=t>=T_STEP0-.2&&t<T_STATS+.2;
+ bar.style.opacity=inSteps?cl(Math.min((t-T_STEP0+.2)/.3,(T_STATS+.2-t)/.3)):0;
+ document.querySelectorAll('#bar i').forEach((b,i)=>{b.style.width=(cl((t-T_STEP0-i*STEP_D)/STEP_D)*100)+'%'});
+ STEPS.forEach((d,i)=>{
+  const a=T_STEP0+i*STEP_D, e=a+STEP_D, el=$('#st'+i);
+  if(t<a-.05||t>e+.05&&i<4||t>e+.35){el.style.opacity=0;return;}
+  el.style.opacity=1; const lt=t-a;
+  const outP=ic3(k(t,e-.28,.28)); // swipe-up exit
+  const inP=oc(k(lt,0,.38));
+  el.style.transform=`translateY(${(1-inP)*90-outP*110}px)`;
+  el.style.opacity=Math.min(inP*1.3,1-outP);
+  el.style.filter=(1-inP+outP)>.05?`blur(${(1-inP+outP)*7}px)`:'none';
+  S(el.querySelector('.badge'),{s:.4+.6*ob(k(lt,.05,.5)),r:(1-oc(k(lt,.05,.6)))*-60});
+  el.querySelector('.ring').style.transform=`rotate(${lt*70}deg)`;
+  const bp=k(lt,.1,.6); S(el.querySelector('.burst'),{o:bp>0&&bp<1?(1-bp):0,s:.7+bp*.7});
+  S(el.querySelector('.num'),{o:oc(k(lt,.1,.4)),x:(1-oc(k(lt,.1,.5)))*-40});
+  el.querySelectorAll('.k').forEach((n,j)=>S(n,pop(lt,.15+j*.09,.35,18)));
+  el.querySelectorAll('.tick').forEach((n,j)=>{const p=k(lt,.55+j*.22,.15); n.style.opacity=p; n.parentNode.style.background=p>0?`rgba(255,138,61,${p})`:'transparent'; n.parentNode.style.borderColor=p>0?'#ff8a3d':'rgba(255,255,255,.4)'});
+ });
+
+ // stats
+ const st=$('#stats'); const sIn=t>=T_STATS&&t<T_SUM_IN;
+ st.style.opacity=sIn?1:0;
+ if(sIn){
+  const lt=t-T_STATS, out=k(t,T_SUM_IN-.3,.3);
+  st.style.opacity=1-out; st.style.transform=`scale(${1-out*.08})`;
+  S($('#t_lab'),pop(lt,0,.4)); S($('#t_a'),pop(lt,.15,.4)); S($('#t_arr'),{...pop(lt,.35,.35),x:(1-oc(k(lt,.35,.4)))*-20});
+  S($('#t_b'),{...pop(lt,.45,.45),s:.8+.2*ob(k(lt,.45,.5))+(lt>1.45&&lt<1.75?.08*Math.sin((lt-1.45)/.3*Math.PI):0)});
+  const cp=oc(k(lt,.55,.9)); $('#t_cnt').textContent=Math.round(6+27*cp)+(cp>=1?'+':'');
+  $('#t_fill').style.width=(18+82*oc(k(lt,.55,.9)))+'%';
+  S($('#t_txt'),pop(lt,1.3,.4));
+ }
+
+ // sparkles twinkle
+ const tq=Math.floor(t*5)/5; document.querySelectorAll('.spark').forEach((e,i)=>{const ph=(tq*1.1+i*.37)%1.8/1.8; const v=Math.max(0,Math.sin(ph*Math.PI)); S(e,{o:.15+.75*v,s:(.4+.8*v)*SP[i][2],r:tq*40+i*30})});
+}
+window.render=render;
+render(0);
+</script>
+</body></html>
